@@ -2,1215 +2,948 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PyHost — Telegram Bot Hosting</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PyHost — Bot Hosting</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#070910;--surface:#0c0e16;--card:#10131c;--border:#1a1f2e;--border2:#222840;
+  --accent:#4f8ef7;--accent2:#6366f1;--green:#22c55e;--red:#ef4444;
+  --yellow:#f59e0b;--orange:#f97316;--text:#dde3f0;--muted:#5a6480;--dim:#2a3050;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-  :root {
-    --bg:        #0a0c10;
-    --surface:   #0f1117;
-    --card:      #13161e;
-    --border:    #1e2230;
-    --border2:   #252a3a;
-    --accent:    #3b82f6;
-    --accent2:   #6366f1;
-    --green:     #22c55e;
-    --red:       #ef4444;
-    --yellow:    #eab308;
-    --orange:    #f97316;
-    --text:      #e2e8f0;
-    --muted:     #64748b;
-    --dim:       #334155;
-    --mono:      'JetBrains Mono', monospace;
-    --sans:      'Inter', sans-serif;
-  }
+/* ── LOGIN ── */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:900}
+.lbox{width:360px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:36px;display:flex;flex-direction:column;gap:20px}
+.llogo{font-family:var(--mono);font-size:20px;font-weight:700;display:flex;align-items:center;gap:9px}
+.ldot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.lsub{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.fl{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-family:var(--mono)}
+.fi{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.fi:focus{border-color:var(--accent)}
+.bp{width:100%;padding:10px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.bp:hover{opacity:.85}
+.lerr{font-size:12px;color:var(--red);text-align:center;font-family:var(--mono);display:none}
+.lhint{font-size:11px;color:var(--muted);text-align:center;font-family:var(--mono)}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── APP ── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.on{display:flex}
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.tlogo{font-family:var(--mono);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tspace{flex:1}
+.tuser{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.blog{background:none;border:1px solid var(--border2);border-radius:6px;padding:5px 11px;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+.blog:hover{border-color:var(--red);color:var(--red)}
+.main{display:flex;flex:1;overflow:hidden}
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* ── SIDEBAR ── */
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.slabel{padding:16px 14px 5px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+.nav{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .12s;border-left:2px solid transparent;font-weight:500}
+.nav:hover{background:var(--card);color:var(--text)}
+.nav.on{background:var(--card);color:var(--accent);border-left-color:var(--accent)}
+.nicon{width:16px;text-align:center;font-size:14px}
+.sbots{padding:6px;flex:1;overflow-y:auto}
+.bitem{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;cursor:pointer;transition:background .12s;margin-bottom:1px}
+.bitem:hover{background:var(--card)}
+.bitem.on{background:var(--border)}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.bname{font-family:var(--mono);font-size:11px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--surface); }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:22px}
 
-  /* ── LOGIN ── */
-  #login-screen {
-    position: fixed; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--bg);
-    z-index: 999;
-  }
-  .login-box {
-    width: 380px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
-    display: flex; flex-direction: column; gap: 24px;
-  }
-  .login-logo {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--mono); font-size: 22px; font-weight: 700;
-    color: var(--text);
-  }
-  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
-  .login-sub { font-size: 13px; color: var(--muted); font-family: var(--mono); }
-  .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
-  .field-input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 14px; font-family: var(--mono); font-size: 13px;
-    color: var(--text); outline: none; transition: border-color .2s;
-  }
-  .field-input:focus { border-color: var(--accent); }
-  .btn-primary {
-    width: 100%; padding: 11px; background: var(--accent); border: none;
-    border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 13px;
-    font-weight: 600; cursor: pointer; transition: opacity .2s;
-  }
-  .btn-primary:hover { opacity: .85; }
-  .login-hint { font-size: 11px; color: var(--muted); text-align: center; font-family: var(--mono); }
-  .login-err { font-size: 12px; color: var(--red); text-align: center; font-family: var(--mono); display: none; }
+/* ── CARDS ── */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:18px}
+.ph{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.pt{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);flex:1}
+.pb{padding:18px}
 
-  /* ── APP SHELL ── */
-  #app { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
-  #app.visible { display: flex; }
+/* ── STATS ── */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:14px 16px}
+.sl{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.sv{font-size:24px;font-weight:700;font-family:var(--mono);margin-top:5px}
+.ss{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px}
 
-  /* ── TOP BAR ── */
-  .topbar {
-    height: 54px; background: var(--surface); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
-  }
-  .topbar-logo { font-family: var(--mono); font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .topbar-logo .logo-dot { width: 8px; height: 8px; }
-  .topbar-spacer { flex: 1; }
-  .topbar-user { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-  .btn-logout {
-    background: none; border: 1px solid var(--border2); border-radius: 6px;
-    padding: 5px 12px; color: var(--muted); font-family: var(--mono); font-size: 11px;
-    cursor: pointer; transition: all .2s;
-  }
-  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.bg{background:#16a34a1a;color:var(--green);border:1px solid #16a34a33}
+.br{background:#ef44441a;color:var(--red);border:1px solid #ef444433}
+.bb{background:#4f8ef71a;color:var(--accent);border:1px solid #4f8ef733}
+.by{background:#f59e0b1a;color:var(--yellow);border:1px solid #f59e0b33}
+.bd{width:5px;height:5px;border-radius:50%;background:currentColor}
 
-  /* ── MAIN LAYOUT ── */
-  .main { display: flex; flex: 1; overflow: hidden; }
+/* ── BUTTONS ── */
+.bs{padding:5px 11px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s}
+.bs:hover{background:var(--border)}
+.bs:disabled{opacity:.4;cursor:not-allowed}
+.bsg{border-color:#16a34a33;color:var(--green)}.bsg:hover{background:#16a34a1a}
+.bsr{border-color:#ef444433;color:var(--red)}.bsr:hover{background:#ef44441a}
+.bsb{border-color:#4f8ef733;color:var(--accent)}.bsb:hover{background:#4f8ef71a}
+.bsy{border-color:#f59e0b33;color:var(--yellow)}.bsy:hover{background:#f59e0b1a}
+.bprim{background:var(--accent);border:none;border-radius:7px;color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;padding:9px 16px;cursor:pointer;transition:opacity .15s;width:100%}
+.bprim:hover{opacity:.85}
+.bprim:disabled{opacity:.4;cursor:not-allowed}
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
-  }
-  .sidebar-section-label {
-    padding: 18px 16px 6px; font-size: 10px; font-weight: 700; color: var(--muted);
-    text-transform: uppercase; letter-spacing: .1em; font-family: var(--mono);
-  }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px; font-size: 13px; color: var(--muted);
-    cursor: pointer; border-radius: 0; transition: all .15s;
-    font-family: var(--sans); font-weight: 500; border-left: 2px solid transparent;
-  }
-  .nav-item:hover { background: var(--card); color: var(--text); }
-  .nav-item.active { background: var(--card); color: var(--accent); border-left-color: var(--accent); }
-  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
-  .sidebar-bot-list { padding: 8px; flex: 1; overflow-y: auto; }
-  .bot-nav-item {
-    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-    border-radius: 8px; cursor: pointer; transition: background .15s; margin-bottom: 2px;
-  }
-  .bot-nav-item:hover { background: var(--card); }
-  .bot-nav-item.active { background: var(--border); }
-  .bot-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .bot-nav-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ── FORM ── */
+.fg{margin-bottom:14px}
+.fl2{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-family:var(--mono)}
+.fi2,.fsel,.fta{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 11px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.fi2:focus,.fsel:focus,.fta:focus{border-color:var(--accent)}
+.fta{resize:vertical;min-height:72px}
+.fsel{appearance:none}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  /* ── CONTENT ── */
-  .content { flex: 1; overflow-y: auto; padding: 24px; }
+/* ── UPLOAD ── */
+.uzone{border:2px dashed var(--border2);border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface)}
+.uzone:hover,.uzone.over{border-color:var(--accent);background:#4f8ef708}
+.uicon{font-size:30px;margin-bottom:10px}
+.utitle{font-family:var(--mono);font-size:13px;color:var(--text);margin-bottom:4px}
+.usub{font-size:11px;color:var(--muted);font-family:var(--mono)}
 
-  /* ── PANEL / CARD ── */
-  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-  .panel-header {
-    padding: 14px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .panel-title { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-  .panel-body { padding: 20px; }
+/* ── LOG ── */
+.log{background:#060810;border-radius:9px;padding:14px;font-family:var(--mono);font-size:11px;line-height:1.7;height:300px;overflow-y:auto;color:#8892aa;border:1px solid var(--border)}
+.ll{display:flex;gap:9px;flex-wrap:wrap}
+.lt{color:var(--muted);flex-shrink:0}
+.li{color:var(--accent)}.lw{color:var(--yellow)}.le{color:var(--red)}.lo{color:var(--green)}
+.lm{color:#b0bcd0}
 
-  /* ── STATS GRID ── */
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-  .stat-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px 18px;
-  }
-  .stat-label { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
-  .stat-value { font-size: 26px; font-weight: 700; font-family: var(--mono); margin-top: 6px; }
-  .stat-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 3px; }
+/* ── BARS ── */
+.rb{margin-bottom:12px}
+.rbh{display:flex;justify-content:space-between;margin-bottom:5px}
+.rbl{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.rbv{font-family:var(--mono);font-size:11px;font-weight:600}
+.rbt{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.rbf{height:100%;border-radius:3px;transition:width .5s ease}
 
-  /* ── BOT CARD ── */
-  .bot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-  .bot-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px; cursor: pointer; transition: border-color .2s;
-  }
-  .bot-card:hover { border-color: var(--border2); }
-  .bot-card.running { border-color: #16a34a44; }
-  .bot-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .bot-card-icon {
-    width: 38px; height: 38px; border-radius: 10px; background: var(--surface);
-    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .bot-card-name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text); }
-  .bot-card-file { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-    border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono);
-  }
-  .badge-green { background: #16a34a22; color: var(--green); border: 1px solid #16a34a44; }
-  .badge-red { background: #dc262622; color: var(--red); border: 1px solid #dc262644; }
-  .badge-yellow { background: #ca8a0422; color: var(--yellow); border: 1px solid #ca8a0444; }
-  .badge-blue { background: #3b82f622; color: var(--accent); border: 1px solid #3b82f644; }
-  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .bot-card-meta { display: flex; gap: 8px; align-items: center; }
-  .bot-card-actions { display: flex; gap: 6px; margin-top: 14px; }
-  .btn-sm {
-    padding: 5px 12px; border-radius: 6px; font-family: var(--mono); font-size: 11px;
-    font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--surface);
-    color: var(--text); transition: all .15s;
-  }
-  .btn-sm:hover { background: var(--border); }
-  .btn-sm.green { border-color: #16a34a55; color: var(--green); }
-  .btn-sm.green:hover { background: #16a34a22; }
-  .btn-sm.red { border-color: #dc262655; color: var(--red); }
-  .btn-sm.red:hover { background: #dc262622; }
-  .btn-sm.blue { border-color: #3b82f655; color: var(--accent); }
-  .btn-sm.blue:hover { background: #3b82f622; }
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse}
+.dt th{padding:9px 12px;text-align:left;font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+.dt td{padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--text);border-bottom:1px solid var(--border)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--surface)}
 
-  /* ── UPLOAD ZONE ── */
-  .upload-zone {
-    border: 2px dashed var(--border2); border-radius: 12px;
-    padding: 36px; text-align: center; cursor: pointer;
-    transition: all .2s; background: var(--surface);
-  }
-  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: #3b82f608; }
-  .upload-zone-icon { font-size: 36px; margin-bottom: 12px; }
-  .upload-zone-title { font-family: var(--mono); font-size: 14px; color: var(--text); margin-bottom: 6px; }
-  .upload-zone-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+/* ── TABS ── */
+.tabs{display:flex;gap:1px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{padding:8px 16px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
 
-  /* ── LOG TERMINAL ── */
-  .log-terminal {
-    background: #080a0e; border-radius: 10px; padding: 16px;
-    font-family: var(--mono); font-size: 12px; line-height: 1.7;
-    height: 320px; overflow-y: auto; color: #a0aec0;
-    border: 1px solid var(--border);
-  }
-  .log-line { display: flex; gap: 10px; }
-  .log-time { color: var(--muted); flex-shrink: 0; }
-  .log-level-info { color: var(--accent); }
-  .log-level-warn { color: var(--yellow); }
-  .log-level-err  { color: var(--red); }
-  .log-level-ok   { color: var(--green); }
-  .log-msg { color: #cbd5e1; }
+/* ── EMPTY ── */
+.empty{text-align:center;padding:50px 20px}
+.ei{font-size:40px;margin-bottom:12px;opacity:.35}
+.et{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.es{font-size:12px;color:var(--dim)}
 
-  /* ── RESOURCE BARS ── */
-  .res-bar-wrap { margin-bottom: 14px; }
-  .res-bar-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .res-bar-label { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-  .res-bar-val { font-family: var(--mono); font-size: 12px; font-weight: 600; }
-  .res-bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-  .res-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+/* ── PROGRESS ── */
+.prog{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px}
+.pf{height:100%;background:var(--accent);transition:width .25s}
 
-  /* ── FILE LIST ── */
-  .file-list { display: flex; flex-direction: column; gap: 6px; }
-  .file-item {
-    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-    background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
-  }
-  .file-icon { font-size: 16px; }
-  .file-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; }
-  .file-size { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-  .file-actions { display: flex; gap: 6px; }
+/* ── NOTIFS ── */
+#notifs{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:9999;pointer-events:none}
+.notif{background:var(--card);border:1px solid var(--border2);border-radius:9px;padding:10px 16px;font-family:var(--mono);font-size:11px;color:var(--text);display:flex;align-items:center;gap:9px;min-width:240px;animation:sin .2s ease;pointer-events:all}
+.notif.ns{border-left:3px solid var(--green)}
+.notif.ne{border-left:3px solid var(--red)}
+.notif.ni{border-left:3px solid var(--accent)}
+@keyframes sin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse{animation:pulse 1.8s infinite}
 
-  /* ── FORM FIELDS ── */
-  .form-group { margin-bottom: 16px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .form-input, .form-select, .form-textarea {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 9px 13px; font-family: var(--mono); font-size: 12px;
-    color: var(--text); outline: none; transition: border-color .2s;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
-  .form-textarea { resize: vertical; min-height: 80px; }
-  .form-select { appearance: none; }
-  .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; font-family: var(--mono); }
+/* ── EDITOR MODAL ── */
+#editor-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:500}
+#editor-modal.on{display:flex}
+.ebox{background:var(--card);border:1px solid var(--border2);border-radius:13px;padding:24px;width:700px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;gap:16px}
+.etitle{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)}
+.ecode{width:100%;flex:1;min-height:380px;background:#060810;border:1px solid var(--border);border-radius:7px;padding:12px;font-family:var(--mono);font-size:12px;color:#b0bcd0;outline:none;resize:vertical;line-height:1.6}
+.ebtns{display:flex;gap:8px;justify-content:flex-end}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.7);
-    display: flex; align-items: center; justify-content: center; z-index: 500;
-  }
-  .modal-box {
-    background: var(--card); border: 1px solid var(--border2); border-radius: 16px;
-    padding: 28px; width: 480px; max-width: 96vw;
-  }
-  .modal-title { font-family: var(--mono); font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
-
-  /* ── PROGRESS ── */
-  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
-  .progress-fill { height: 100%; background: var(--accent); transition: width .3s; }
-
-  /* ── TABLE ── */
-  .data-table { width: 100%; border-collapse: collapse; }
-  .data-table th {
-    padding: 10px 14px; text-align: left; font-family: var(--mono); font-size: 10px;
-    font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em;
-    border-bottom: 1px solid var(--border);
-  }
-  .data-table td {
-    padding: 10px 14px; font-family: var(--mono); font-size: 12px; color: var(--text);
-    border-bottom: 1px solid var(--border);
-  }
-  .data-table tr:last-child td { border-bottom: none; }
-  .data-table tr:hover td { background: var(--surface); }
-
-  /* ── TABS ── */
-  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .tab {
-    padding: 9px 18px; font-family: var(--mono); font-size: 12px; font-weight: 600;
-    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all .15s; margin-bottom: -1px;
-  }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  /* ── EMPTY STATE ── */
-  .empty-state { text-align: center; padding: 60px 20px; }
-  .empty-icon { font-size: 48px; margin-bottom: 14px; opacity: .4; }
-  .empty-title { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .empty-sub { font-size: 13px; color: var(--dim); }
-
-  /* ── PULSE ANIMATION ── */
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
-  .pulse { animation: pulse 2s infinite; }
-
-  /* ── NOTIFICATION ── */
-  .notif-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
-  .notif {
-    background: var(--card); border: 1px solid var(--border2); border-radius: 10px;
-    padding: 12px 18px; font-family: var(--mono); font-size: 12px; color: var(--text);
-    display: flex; align-items: center; gap: 10px;
-    animation: slideIn .2s ease; pointer-events: all;
-    min-width: 260px;
-  }
-  .notif.success { border-left: 3px solid var(--green); }
-  .notif.error   { border-left: 3px solid var(--red); }
-  .notif.info    { border-left: 3px solid var(--accent); }
-  @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    .stats-grid { grid-template-columns: repeat(2,1fr); }
-    .sidebar { width: 180px; }
-  }
-  @media (max-width: 650px) {
-    .sidebar { display: none; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-  }
+@media(max-width:900px){.sgrid{grid-template-columns:1fr 1fr}.sidebar{width:170px}}
+@media(max-width:600px){.sidebar{display:none}.sgrid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
-<!-- ══════════ LOGIN ══════════ -->
-<div id="login-screen">
-  <div class="login-box">
-    <div>
-      <div class="login-logo"><div class="logo-dot"></div>PyHost</div>
-      <div class="login-sub" style="margin-top:6px">Telegram Bot Hosting Platform</div>
-    </div>
-    <div>
-      <div class="field-label">Username</div>
-      <input class="field-input" id="login-user" type="text" placeholder="admin" autocomplete="off"/>
-    </div>
-    <div>
-      <div class="field-label">Password</div>
-      <input class="field-input" id="login-pass" type="password" placeholder="••••••••"/>
-    </div>
-    <button class="btn-primary" id="login-btn">Sign In</button>
-    <div class="login-err" id="login-err">Invalid credentials</div>
-    <div class="login-hint">Default: admin / admin123</div>
+<!-- LOGIN -->
+<div id="login">
+  <div class="lbox">
+    <div><div class="llogo"><div class="ldot"></div>PyHost</div>
+    <div class="lsub" style="margin-top:5px">Telegram Bot Hosting Panel</div></div>
+    <div><label class="fl">Username</label><input class="fi" id="lu" autocomplete="off" placeholder="admin"/></div>
+    <div><label class="fl">Password</label><input class="fi" id="lp" type="password" placeholder="••••••••"/></div>
+    <button class="bp" id="lbtn">Sign In</button>
+    <div class="lerr" id="lerr">Invalid credentials</div>
+    <div class="lhint">Default · admin / admin123</div>
   </div>
 </div>
 
-<!-- ══════════ APP ══════════ -->
+<!-- APP -->
 <div id="app">
-  <!-- TOP BAR -->
   <div class="topbar">
-    <div class="topbar-logo"><div class="logo-dot"></div>PyHost</div>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-user" id="tb-user"></div>
-    <button class="btn-logout" id="logout-btn">Logout</button>
+    <div class="tlogo"><div class="ldot"></div>PyHost</div>
+    <div class="tspace"></div>
+    <div class="tuser" id="tuser"></div>
+    <button class="blog" id="loutbtn">Logout</button>
   </div>
-
   <div class="main">
-    <!-- SIDEBAR -->
     <div class="sidebar">
-      <div class="sidebar-section-label">Navigation</div>
-      <div class="nav-item active" data-view="dashboard"><span class="nav-icon">◈</span>Dashboard</div>
-      <div class="nav-item" data-view="bots"><span class="nav-icon">🤖</span>My Bots</div>
-      <div class="nav-item" data-view="upload"><span class="nav-icon">↑</span>Upload Bot</div>
-      <div class="nav-item" data-view="packages"><span class="nav-icon">📦</span>Packages</div>
-      <div class="nav-item" data-view="logs"><span class="nav-icon">▤</span>Logs</div>
-      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</div>
-      <div class="sidebar-section-label" style="margin-top:10px">Running Bots</div>
-      <div class="sidebar-bot-list" id="sidebar-bots"></div>
+      <div class="slabel">Menu</div>
+      <div class="nav on" data-v="dashboard"><span class="nicon">◈</span>Dashboard</div>
+      <div class="nav" data-v="bots"><span class="nicon">🤖</span>My Bots</div>
+      <div class="nav" data-v="upload"><span class="nicon">↑</span>Upload Bot</div>
+      <div class="nav" data-v="packages"><span class="nicon">📦</span>Packages</div>
+      <div class="nav" data-v="logs"><span class="nicon">▤</span>All Logs</div>
+      <div class="nav" data-v="settings"><span class="nicon">⚙</span>Settings</div>
+      <div class="slabel" style="margin-top:8px">Bots</div>
+      <div class="sbots" id="sbots"></div>
     </div>
-
-    <!-- CONTENT -->
-    <div class="content" id="main-content"></div>
+    <div class="content" id="content"></div>
   </div>
 </div>
 
-<!-- NOTIFICATION STACK -->
-<div class="notif-stack" id="notif-stack"></div>
+<!-- FILE EDITOR MODAL -->
+<div id="editor-modal">
+  <div class="ebox">
+    <div class="etitle" id="editor-title">Edit File</div>
+    <textarea class="ecode" id="editor-code"></textarea>
+    <div class="ebtns">
+      <button class="bs" onclick="closeEditor()">Cancel</button>
+      <button class="bs bsb" onclick="saveFile()">Save File</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFS -->
+<div id="notifs"></div>
 
 <script>
-/* ══════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════ */
-const STATE = {
-  user: null,
-  bots: [],
-  logs: {},
-  activeView: 'dashboard',
-  selectedBot: null,
-  packages: {},
-  uploadProgress: 0,
+/* ══════════════ STATE ══════════════ */
+const S = { user: null, bots: [], view: 'dashboard', bot: null };
+let _editorBot = null, _editorFile = null;
+let _liveLogEs = null, _statsInterval = null;
+
+/* ══════════════ API ══════════════ */
+const api = {
+  async req(method, path, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch('/api' + path, opts);
+    return r.json();
+  },
+  get:    (p)    => api.req('GET', p),
+  post:   (p, b) => api.req('POST', p, b),
+  patch:  (p, b) => api.req('PATCH', p, b),
+  delete: (p)    => api.req('DELETE', p),
+  put:    (p, b) => api.req('PUT', p, b),
 };
 
-const USERS = { admin: 'admin123', hassan: 'host2025' };
-
-/* ══════════════════════════════════════════════
-   SAMPLE BOTS
-══════════════════════════════════════════════ */
-function seedBots() {
-  STATE.bots = [
-    {
-      id: 'bot_001', name: 'SalesBot', file: 'sales_bot.py', token: '7123456789:AAF...',
-      status: 'running', cpu: 4.2, ram: 48, uptime: 14400,
-      startCmd: 'python sales_bot.py', packages: ['python-telegram-bot','requests'],
-      env: 'BOT_TOKEN=xxx\nADMIN_ID=123456',
-      created: Date.now() - 86400000,
-      logs: [
-        { t: ts(), lvl:'ok',   msg:'Bot started successfully' },
-        { t: ts(), lvl:'info', msg:'Polling for updates...' },
-        { t: ts(), lvl:'info', msg:'User 123456 sent /start' },
-        { t: ts(), lvl:'ok',   msg:'Replied to /start' },
-      ]
-    },
-    {
-      id: 'bot_002', name: 'AccountBot', file: 'account_bot.py', token: '7987654321:BBG...',
-      status: 'running', cpu: 2.8, ram: 62, uptime: 7200,
-      startCmd: 'python account_bot.py', packages: ['telethon','python-telegram-bot'],
-      env: 'API_ID=12345\nAPI_HASH=abcdef',
-      created: Date.now() - 43200000,
-      logs: [
-        { t: ts(), lvl:'ok',   msg:'Telethon session loaded' },
-        { t: ts(), lvl:'info', msg:'Listening for /buy commands' },
-        { t: ts(), lvl:'warn', msg:'Payment timeout on order #44' },
-        { t: ts(), lvl:'ok',   msg:'Session verified — code relayed' },
-      ]
-    },
-    {
-      id: 'bot_003', name: 'NotifyBot', file: 'notify.py', token: '7555444333:CCH...',
-      status: 'stopped', cpu: 0, ram: 0, uptime: 0,
-      startCmd: 'python notify.py', packages: ['python-telegram-bot'],
-      env: '',
-      created: Date.now() - 172800000,
-      logs: [
-        { t: ts(), lvl:'ok',   msg:'Bot started' },
-        { t: ts(), lvl:'err',  msg:'ConnectionError: timeout' },
-        { t: ts(), lvl:'err',  msg:'Bot crashed — watchdog will retry' },
-      ]
-    }
-  ];
-}
-
-function ts() { return new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
-
-/* ══════════════════════════════════════════════
-   NOTIFICATION
-══════════════════════════════════════════════ */
+/* ══════════════ NOTIFY ══════════════ */
 function notify(msg, type='info') {
-  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  const icons = { success:'✓', error:'✕', info:'·' };
   const el = document.createElement('div');
-  el.className = `notif ${type}`;
-  el.innerHTML = `<span>${icons[type]||'•'}</span><span>${msg}</span>`;
-  document.getElementById('notif-stack').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  el.className = `notif n${type[0]}`;
+  el.innerHTML = `<span>${icons[type]||'·'}</span><span>${msg}</span>`;
+  document.getElementById('notifs').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
 }
 
-/* ══════════════════════════════════════════════
-   LOGIN
-══════════════════════════════════════════════ */
-document.getElementById('login-btn').onclick = doLogin;
-document.getElementById('login-pass').onkeydown = e => e.key==='Enter' && doLogin();
+/* ══════════════ LOGIN ══════════════ */
+document.getElementById('lbtn').onclick = doLogin;
+document.getElementById('lp').onkeydown = e => e.key==='Enter' && doLogin();
 
-function doLogin() {
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value;
-  if (USERS[u] && USERS[u] === p) {
-    STATE.user = u;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    document.getElementById('tb-user').textContent = u;
-    seedBots();
-    render('dashboard');
-    startLiveUpdates();
+async function doLogin() {
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value;
+  const r = await api.post('/login', { username: u, password: p });
+  if (r.ok) {
+    S.user = u;
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+    document.getElementById('tuser').textContent = u;
+    loadAndRender('dashboard');
+    startStatsPoll();
   } else {
-    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('lerr').style.display = 'block';
   }
 }
-document.getElementById('logout-btn').onclick = () => {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').classList.remove('visible');
-  STATE.user = null;
+
+document.getElementById('loutbtn').onclick = async () => {
+  await api.post('/logout');
+  location.reload();
 };
 
-/* ══════════════════════════════════════════════
-   NAV
-══════════════════════════════════════════════ */
-document.querySelectorAll('.nav-item[data-view]').forEach(el => {
-  el.onclick = () => render(el.dataset.view);
+/* ══════════════ NAV ══════════════ */
+document.querySelectorAll('.nav[data-v]').forEach(el => {
+  el.onclick = () => loadAndRender(el.dataset.v);
 });
 
-function setActiveNav(view) {
-  document.querySelectorAll('.nav-item[data-view]').forEach(el => {
-    el.classList.toggle('active', el.dataset.view === view);
-  });
+function setNav(v) {
+  document.querySelectorAll('.nav[data-v]').forEach(el =>
+    el.classList.toggle('on', el.dataset.v === v));
 }
 
-/* ══════════════════════════════════════════════
-   RENDER ROUTER
-══════════════════════════════════════════════ */
-function render(view, arg) {
-  STATE.activeView = view;
-  setActiveNav(view);
-  renderSidebarBots();
-  const c = document.getElementById('main-content');
-  if (view === 'dashboard') c.innerHTML = renderDashboard();
-  else if (view === 'bots')  c.innerHTML = renderBots();
-  else if (view === 'upload') { c.innerHTML = renderUpload(); initUpload(); }
-  else if (view === 'packages') c.innerHTML = renderPackages();
-  else if (view === 'logs')  c.innerHTML = renderLogs(arg);
-  else if (view === 'settings') c.innerHTML = renderSettings();
-  else if (view === 'bot-detail') { c.innerHTML = renderBotDetail(arg); initBotDetail(arg); }
-  attachHandlers();
-}
-
-/* ══════════════════════════════════════════════
-   SIDEBAR BOT LIST
-══════════════════════════════════════════════ */
-function renderSidebarBots() {
-  const el = document.getElementById('sidebar-bots');
+/* ══════════════ SIDEBAR BOTS ══════════════ */
+function renderSidebar() {
+  const el = document.getElementById('sbots');
   if (!el) return;
-  el.innerHTML = STATE.bots.map(b => `
-    <div class="bot-nav-item ${STATE.selectedBot===b.id?'active':''}" onclick="openBot('${b.id}')">
-      <div class="bot-status-dot" style="background:${b.status==='running'?'#22c55e':'#ef4444'}"></div>
-      <div class="bot-nav-name">${b.name}</div>
-    </div>
-  `).join('');
+  el.innerHTML = S.bots.map(b => `
+    <div class="bitem ${S.bot?.id===b.id?'on':''}" onclick="openBot('${b.id}')">
+      <div class="bdot" style="background:${b.status==='running'?'var(--green)':'var(--red)'}"></div>
+      <div class="bname">${b.name}</div>
+    </div>`).join('');
 }
 
-/* ══════════════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════════════ */
-function renderDashboard() {
-  const running = STATE.bots.filter(b=>b.status==='running').length;
-  const stopped = STATE.bots.filter(b=>b.status==='stopped').length;
-  const avgCpu = (STATE.bots.reduce((a,b)=>a+b.cpu,0)/Math.max(STATE.bots.length,1)).toFixed(1);
-  const totalRam = STATE.bots.reduce((a,b)=>a+b.ram,0);
-  return `
-    <div style="margin-bottom:22px">
-      <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text)">Dashboard</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px">Platform overview — ${new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
-    </div>
+/* ══════════════ ROUTER ══════════════ */
+async function loadAndRender(view, arg) {
+  S.view = view;
+  setNav(view);
+  stopLiveLog();
+  const c = document.getElementById('content');
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Bots</div>
-        <div class="stat-value" style="color:var(--text)">${STATE.bots.length}</div>
-        <div class="stat-sub">Registered</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Running</div>
-        <div class="stat-value" style="color:var(--green)">${running}</div>
-        <div class="stat-sub">Active right now</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg CPU</div>
-        <div class="stat-value" style="color:var(--accent)">${avgCpu}%</div>
-        <div class="stat-sub">Across all bots</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">RAM Used</div>
-        <div class="stat-value" style="color:var(--orange)">${totalRam} MB</div>
-        <div class="stat-sub">Combined</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">⚡ Bot Status</div>
-        <button class="btn-sm blue" onclick="render('upload')">+ Upload Bot</button>
-      </div>
-      <div class="panel-body">
-        <table class="data-table">
-          <thead><tr>
-            <th>Name</th><th>Status</th><th>CPU</th><th>RAM</th><th>Uptime</th><th>Actions</th>
-          </tr></thead>
-          <tbody>
-            ${STATE.bots.map(b=>`
-              <tr>
-                <td style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openBot('${b.id}')">${b.name}</td>
-                <td>${statusBadge(b.status)}</td>
-                <td style="color:${b.cpu>50?'var(--orange)':'var(--text)'}">${b.cpu}%</td>
-                <td>${b.ram} MB</td>
-                <td>${formatUptime(b.uptime)}</td>
-                <td style="display:flex;gap:6px">
-                  ${b.status==='running'
-                    ? `<button class="btn-sm red" onclick="stopBot('${b.id}')">Stop</button>`
-                    : `<button class="btn-sm green" onclick="startBot('${b.id}')">Start</button>`}
-                  <button class="btn-sm" onclick="render('logs','${b.id}')">Logs</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header"><div class="panel-title">▤ Recent Log Activity</div></div>
-      <div class="panel-body">
-        <div class="log-terminal" id="dash-log">
-          ${STATE.bots.flatMap(b=>b.logs.slice(-3).map(l=>`
-            <div class="log-line">
-              <span class="log-time">${l.t}</span>
-              <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
-              <span style="color:var(--muted)">[${b.name}]</span>
-              <span class="log-msg">${l.msg}</span>
-            </div>
-          `)).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-/* ══════════════════════════════════════════════
-   BOTS LIST
-══════════════════════════════════════════════ */
-function renderBots() {
-  return `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
-      <div style="font-family:var(--mono);font-size:20px;font-weight:700">My Bots</div>
-      <div class="topbar-spacer"></div>
-      <button class="btn-sm blue" onclick="render('upload')">+ Upload New Bot</button>
-    </div>
-    ${STATE.bots.length === 0 ? `
-      <div class="empty-state">
-        <div class="empty-icon">🤖</div>
-        <div class="empty-title">No bots yet</div>
-        <div class="empty-sub">Upload your first Python bot to get started</div>
-      </div>
-    ` : `
-      <div class="bot-grid">
-        ${STATE.bots.map(b=>`
-          <div class="bot-card ${b.status}" onclick="openBot('${b.id}')">
-            <div class="bot-card-header">
-              <div class="bot-card-icon">🤖</div>
-              <div>
-                <div class="bot-card-name">${b.name}</div>
-                <div class="bot-card-file">${b.file}</div>
-              </div>
-            </div>
-            <div class="bot-card-meta">
-              ${statusBadge(b.status)}
-              <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">↑ ${formatUptime(b.uptime)}</span>
-            </div>
-            <div style="margin-top:12px">
-              <div class="res-bar-wrap" style="margin-bottom:8px">
-                <div class="res-bar-header">
-                  <span class="res-bar-label">CPU</span>
-                  <span class="res-bar-val" style="color:var(--accent)">${b.cpu}%</span>
-                </div>
-                <div class="res-bar-track"><div class="res-bar-fill" style="width:${b.cpu}%;background:var(--accent)"></div></div>
-              </div>
-              <div class="res-bar-wrap">
-                <div class="res-bar-header">
-                  <span class="res-bar-label">RAM</span>
-                  <span class="res-bar-val" style="color:var(--orange)">${b.ram} MB</span>
-                </div>
-                <div class="res-bar-track"><div class="res-bar-fill" style="width:${Math.min(b.ram/2,100)}%;background:var(--orange)"></div></div>
-              </div>
-            </div>
-            <div class="bot-card-actions" onclick="event.stopPropagation()">
-              ${b.status==='running'
-                ? `<button class="btn-sm red" onclick="stopBot('${b.id}')">⬛ Stop</button>
-                   <button class="btn-sm yellow" onclick="restartBot('${b.id}')">↺ Restart</button>`
-                : `<button class="btn-sm green" onclick="startBot('${b.id}')">▶ Start</button>`}
-              <button class="btn-sm" onclick="render('logs','${b.id}')">Logs</button>
-              <button class="btn-sm red" onclick="deleteBot('${b.id}')">✕</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `}
-  `;
-}
-
-/* ══════════════════════════════════════════════
-   BOT DETAIL
-══════════════════════════════════════════════ */
-function renderBotDetail(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return '<div class="empty-state"><div class="empty-title">Bot not found</div></div>';
-  return `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
-      <button class="btn-sm" onclick="render('bots')">← Back</button>
-      <div style="font-family:var(--mono);font-size:20px;font-weight:700">${b.name}</div>
-      ${statusBadge(b.status)}
-      <div class="topbar-spacer"></div>
-      ${b.status==='running'
-        ? `<button class="btn-sm red" onclick="stopBot('${b.id}');setTimeout(()=>render('bot-detail','${b.id}'),400)">⬛ Stop</button>
-           <button class="btn-sm yellow" onclick="restartBot('${b.id}')">↺ Restart</button>`
-        : `<button class="btn-sm green" onclick="startBot('${b.id}');setTimeout(()=>render('bot-detail','${b.id}'),400)">▶ Start</button>`}
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" data-tab="overview">Overview</div>
-      <div class="tab" data-tab="env">Environment</div>
-      <div class="tab" data-tab="files">Files</div>
-      <div class="tab" data-tab="livelog">Live Logs</div>
-    </div>
-
-    <div id="tab-content">
-      <div id="tab-overview">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="panel">
-            <div class="panel-header"><div class="panel-title">Resources</div></div>
-            <div class="panel-body">
-              <div class="res-bar-wrap">
-                <div class="res-bar-header">
-                  <span class="res-bar-label">CPU Usage</span>
-                  <span class="res-bar-val" style="color:var(--accent)">${b.cpu}%</span>
-                </div>
-                <div class="res-bar-track"><div class="res-bar-fill" style="width:${b.cpu}%;background:var(--accent)"></div></div>
-              </div>
-              <div class="res-bar-wrap">
-                <div class="res-bar-header">
-                  <span class="res-bar-label">Memory</span>
-                  <span class="res-bar-val" style="color:var(--orange)">${b.ram} MB</span>
-                </div>
-                <div class="res-bar-track"><div class="res-bar-fill" style="width:${Math.min(b.ram/2,100)}%;background:var(--orange)"></div></div>
-              </div>
-              <div style="margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--muted)">
-                Uptime: <span style="color:var(--text)">${formatUptime(b.uptime)}</span>
-              </div>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-header"><div class="panel-title">Config</div></div>
-            <div class="panel-body">
-              <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px">Start Command</div>
-              <div style="font-family:var(--mono);font-size:12px;background:var(--surface);padding:8px 12px;border-radius:6px;border:1px solid var(--border)">${b.startCmd}</div>
-              <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:6px">Packages (${b.packages.length})</div>
-              <div style="display:flex;flex-wrap:wrap;gap:6px">
-                ${b.packages.map(p=>`<span class="badge badge-blue">${p}</span>`).join('')}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="tab-env" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Environment Variables</div>
-            <button class="btn-sm green" onclick="saveEnv('${b.id}')">Save</button>
-          </div>
-          <div class="panel-body">
-            <textarea class="form-textarea" id="env-editor" style="height:200px;font-size:12px">${b.env}</textarea>
-            <div style="font-size:11px;color:var(--muted);margin-top:8px">One per line: KEY=VALUE</div>
-          </div>
-        </div>
-      </div>
-      <div id="tab-files" style="display:none">
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title">Bot Files</div></div>
-          <div class="panel-body">
-            <div class="file-list">
-              <div class="file-item">
-                <div class="file-icon">🐍</div>
-                <div class="file-name">${b.file}</div>
-                <div class="file-size">12.4 KB</div>
-                <div class="file-actions">
-                  <button class="btn-sm blue">Edit</button>
-                  <button class="btn-sm">Download</button>
-                </div>
-              </div>
-              <div class="file-item">
-                <div class="file-icon">📄</div>
-                <div class="file-name">requirements.txt</div>
-                <div class="file-size">128 B</div>
-                <div class="file-actions">
-                  <button class="btn-sm blue">Edit</button>
-                  <button class="btn-sm">Download</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="tab-livelog" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Live Output — <span class="pulse" style="color:var(--green)">● LIVE</span></div>
-            <button class="btn-sm" onclick="clearLog('${b.id}')">Clear</button>
-          </div>
-          <div class="panel-body">
-            <div class="log-terminal" id="live-log-term">
-              ${b.logs.map(l=>`
-                <div class="log-line">
-                  <span class="log-time">${l.t}</span>
-                  <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
-                  <span class="log-msg">${l.msg}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function initBotDetail(id) {
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => {
-      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      ['overview','env','files','livelog'].forEach(t => {
-        const el = document.getElementById(`tab-${t}`);
-        if (el) el.style.display = t === tab.dataset.tab ? 'block' : 'none';
-      });
-      if (tab.dataset.tab === 'livelog') startLiveLog(id);
-    };
-  });
-}
-
-let liveLogInterval = null;
-function startLiveLog(id) {
-  clearInterval(liveLogInterval);
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b || b.status !== 'running') return;
-  const MSGS = [
-    { lvl:'info', msg:'Processing update...' },
-    { lvl:'ok',   msg:'Handled command successfully' },
-    { lvl:'info', msg:'Polling cycle complete' },
-    { lvl:'warn', msg:'Slow response from Telegram API' },
-    { lvl:'info', msg:'User session verified' },
-  ];
-  liveLogInterval = setInterval(() => {
-    const term = document.getElementById('live-log-term');
-    if (!term) { clearInterval(liveLogInterval); return; }
-    const m = MSGS[Math.floor(Math.random()*MSGS.length)];
-    const line = document.createElement('div');
-    line.className = 'log-line';
-    line.innerHTML = `<span class="log-time">${ts()}</span><span class="log-level-${m.lvl}">[${m.lvl.toUpperCase()}]</span><span class="log-msg">${m.msg}</span>`;
-    term.appendChild(line);
-    term.scrollTop = term.scrollHeight;
-  }, 1800);
-}
-
-/* ══════════════════════════════════════════════
-   UPLOAD VIEW
-══════════════════════════════════════════════ */
-function renderUpload() {
-  return `
-    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Upload Bot</div>
-    <div class="panel" style="max-width:600px">
-      <div class="panel-header"><div class="panel-title">Bot Details</div></div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Bot Name</label>
-          <input class="form-input" id="new-bot-name" placeholder="MyTelegramBot"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Bot Token</label>
-          <input class="form-input" id="new-bot-token" placeholder="7123456789:AAF..."/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Start Command</label>
-          <input class="form-input" id="new-bot-cmd" placeholder="python bot.py" value="python bot.py"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Environment Variables</label>
-          <textarea class="form-textarea" id="new-bot-env" placeholder="BOT_TOKEN=xxx&#10;ADMIN_ID=123456"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Bot File</label>
-          <div class="upload-zone" id="drop-zone">
-            <div class="upload-zone-icon">🐍</div>
-            <div class="upload-zone-title">Drop your .py or .zip file here</div>
-            <div class="upload-zone-sub">or click to browse — max 50 MB</div>
-            <input type="file" id="file-input" accept=".py,.zip" style="display:none"/>
-          </div>
-          <div id="upload-file-name" style="font-family:var(--mono);font-size:12px;color:var(--green);margin-top:8px;display:none"></div>
-          <div class="progress-bar" id="upload-progress" style="display:none"><div class="progress-fill" id="upload-fill" style="width:0%"></div></div>
-        </div>
-        <button class="btn-primary" id="deploy-btn" onclick="deployBot()">🚀 Deploy Bot</button>
-      </div>
-    </div>
-  `;
-}
-
-function initUpload() {
-  const zone = document.getElementById('drop-zone');
-  const fi   = document.getElementById('file-input');
-  if (!zone || !fi) return;
-
-  zone.onclick = () => fi.click();
-  fi.onchange = () => handleFile(fi.files[0]);
-
-  zone.ondragover = e => { e.preventDefault(); zone.classList.add('dragover'); };
-  zone.ondragleave = () => zone.classList.remove('dragover');
-  zone.ondrop = e => { e.preventDefault(); zone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); };
-}
-
-let uploadedFile = null;
-function handleFile(file) {
-  if (!file) return;
-  uploadedFile = file;
-  const nameEl = document.getElementById('upload-file-name');
-  nameEl.textContent = `✓ ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-  nameEl.style.display = 'block';
-  // Simulate progress
-  const bar = document.getElementById('upload-progress');
-  const fill = document.getElementById('upload-fill');
-  bar.style.display = 'block';
-  let p = 0;
-  const iv = setInterval(() => {
-    p += Math.random()*25;
-    if (p >= 100) { p = 100; clearInterval(iv); }
-    fill.style.width = p + '%';
-  }, 120);
-}
-
-function deployBot() {
-  const name = document.getElementById('new-bot-name').value.trim();
-  const token = document.getElementById('new-bot-token').value.trim();
-  const cmd   = document.getElementById('new-bot-cmd').value.trim();
-  const env   = document.getElementById('new-bot-env').value.trim();
-
-  if (!name) { notify('Enter a bot name', 'error'); return; }
-  if (!uploadedFile && !name) { notify('Upload a bot file', 'error'); return; }
-
-  const newBot = {
-    id: 'bot_' + Date.now(),
-    name, token, startCmd: cmd || 'python bot.py',
-    file: uploadedFile ? uploadedFile.name : 'bot.py',
-    status: 'stopped', cpu: 0, ram: 0, uptime: 0,
-    packages: ['python-telegram-bot'], env,
-    created: Date.now(), logs: [{ t: ts(), lvl:'ok', msg:'Bot registered — ready to start' }]
-  };
-  STATE.bots.push(newBot);
-  uploadedFile = null;
-  notify(`${name} deployed successfully!`, 'success');
-  setTimeout(() => render('bots'), 600);
-}
-
-/* ══════════════════════════════════════════════
-   PACKAGES VIEW
-══════════════════════════════════════════════ */
-const COMMON_PKGS = ['python-telegram-bot','telethon','requests','aiohttp','sqlalchemy','redis','celery','pillow','cryptography','pytz'];
-
-function renderPackages() {
-  return `
-    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Package Manager</div>
-    <div class="panel" style="max-width:580px">
-      <div class="panel-header"><div class="panel-title">Install Package</div></div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Target Bot</label>
-          <select class="form-select" id="pkg-target-bot">
-            ${STATE.bots.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Package Name</label>
-          <div style="display:flex;gap:8px">
-            <input class="form-input" id="pkg-name" placeholder="e.g. requests==2.31.0" style="flex:1"/>
-            <button class="btn-sm blue" onclick="installPkg()">Install</button>
-          </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-          ${COMMON_PKGS.map(p=>`<span class="badge badge-blue" style="cursor:pointer" onclick="document.getElementById('pkg-name').value='${p}'">${p}</span>`).join('')}
-        </div>
-        <div id="pkg-output" style="display:none;margin-top:16px">
-          <div class="log-terminal" id="pkg-log" style="height:160px"></div>
-        </div>
-      </div>
-    </div>
-    <div class="panel" style="max-width:580px">
-      <div class="panel-header"><div class="panel-title">Installed Packages</div></div>
-      <div class="panel-body">
-        <table class="data-table">
-          <thead><tr><th>Bot</th><th>Package</th><th>Action</th></tr></thead>
-          <tbody>
-            ${STATE.bots.flatMap(b=>b.packages.map(p=>`
-              <tr>
-                <td style="color:var(--muted)">${b.name}</td>
-                <td><span class="badge badge-blue">${p}</span></td>
-                <td><button class="btn-sm red" onclick="removePkg('${b.id}','${p}')">Remove</button></td>
-              </tr>
-            `)).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-function installPkg() {
-  const botId = document.getElementById('pkg-target-bot').value;
-  const pkg   = document.getElementById('pkg-name').value.trim();
-  if (!pkg) { notify('Enter a package name', 'error'); return; }
-  const b = STATE.bots.find(x=>x.id===botId);
-  if (!b) return;
-  const out = document.getElementById('pkg-output');
-  const log = document.getElementById('pkg-log');
-  out.style.display = 'block';
-  log.innerHTML = '';
-  const steps = [
-    `<span class="log-level-info">[pip]</span> <span class="log-msg">Resolving ${pkg}...</span>`,
-    `<span class="log-level-info">[pip]</span> <span class="log-msg">Downloading ${pkg}...</span>`,
-    `<span class="log-level-info">[pip]</span> <span class="log-msg">Installing collected packages: ${pkg}</span>`,
-    `<span class="log-level-ok">[pip]</span> <span class="log-msg">Successfully installed ${pkg} ✓</span>`,
-  ];
-  let i = 0;
-  const iv = setInterval(() => {
-    if (i >= steps.length) {
-      clearInterval(iv);
-      if (!b.packages.includes(pkg.split('==')[0])) b.packages.push(pkg.split('==')[0]);
-      notify(`${pkg} installed on ${b.name}`, 'success');
-      return;
-    }
-    const line = document.createElement('div');
-    line.className = 'log-line';
-    line.innerHTML = `<span class="log-time">${ts()}</span>${steps[i]}`;
-    log.appendChild(line);
-    log.scrollTop = log.scrollHeight;
-    i++;
-  }, 700);
-}
-
-function removePkg(botId, pkg) {
-  const b = STATE.bots.find(x=>x.id===botId);
-  if (!b) return;
-  b.packages = b.packages.filter(p=>p!==pkg);
-  notify(`Removed ${pkg} from ${b.name}`, 'info');
-  render('packages');
-}
-
-/* ══════════════════════════════════════════════
-   LOGS VIEW
-══════════════════════════════════════════════ */
-function renderLogs(botId) {
-  const b = botId ? STATE.bots.find(x=>x.id===botId) : null;
-  return `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
-      <div style="font-family:var(--mono);font-size:20px;font-weight:700">Logs</div>
-      <div class="topbar-spacer"></div>
-      <select class="form-select" id="log-bot-select" style="width:200px" onchange="render('logs',this.value||undefined)">
-        <option value="">All Bots</option>
-        ${STATE.bots.map(b=>`<option value="${b.id}" ${b.id===botId?'selected':''}>${b.name}</option>`).join('')}
-      </select>
-    </div>
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">${b ? b.name+' Logs' : 'All Logs'}</div>
-        <span class="badge badge-green pulse">● LIVE</span>
-      </div>
-      <div class="panel-body">
-        <div class="log-terminal" id="main-log-term">
-          ${(b ? b.logs : STATE.bots.flatMap(bot=>bot.logs.map(l=>({...l,_bot:bot.name})))).map(l=>`
-            <div class="log-line">
-              <span class="log-time">${l.t}</span>
-              ${l._bot ? `<span style="color:var(--muted)">[${l._bot}]</span>` : ''}
-              <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
-              <span class="log-msg">${l.msg}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-/* ══════════════════════════════════════════════
-   SETTINGS VIEW
-══════════════════════════════════════════════ */
-function renderSettings() {
-  return `
-    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Settings</div>
-    <div class="panel" style="max-width:540px">
-      <div class="panel-header"><div class="panel-title">Platform Config</div></div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Max Bots Per User</label>
-          <input class="form-input" value="10" type="number"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Log Retention (days)</label>
-          <input class="form-input" value="7" type="number"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Auto-Restart on Crash</label>
-          <select class="form-select">
-            <option value="1">Enabled</option>
-            <option value="0">Disabled</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Watchdog Interval (seconds)</label>
-          <input class="form-input" value="30" type="number"/>
-        </div>
-        <button class="btn-primary" onclick="notify('Settings saved','success')">Save Settings</button>
-      </div>
-    </div>
-    <div class="panel" style="max-width:540px">
-      <div class="panel-header"><div class="panel-title">Change Password</div></div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Current Password</label>
-          <input class="form-input" type="password"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">New Password</label>
-          <input class="form-input" type="password"/>
-        </div>
-        <button class="btn-primary" onclick="notify('Password updated','success')">Update Password</button>
-      </div>
-    </div>
-  `;
-}
-
-/* ══════════════════════════════════════════════
-   BOT ACTIONS
-══════════════════════════════════════════════ */
-function startBot(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  b.status = 'running'; b.cpu = +(Math.random()*5+1).toFixed(1); b.ram = Math.floor(Math.random()*60+30);
-  b.logs.push({ t:ts(), lvl:'ok', msg:`Bot started — ${b.startCmd}` });
-  b.logs.push({ t:ts(), lvl:'info', msg:'Polling for updates...' });
-  notify(`${b.name} started`, 'success');
-  if (STATE.activeView==='bots') render('bots');
-  if (STATE.activeView==='dashboard') render('dashboard');
-  renderSidebarBots();
-}
-
-function stopBot(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  b.status = 'stopped'; b.cpu = 0; b.ram = 0;
-  b.logs.push({ t:ts(), lvl:'warn', msg:'Bot stopped by user' });
-  notify(`${b.name} stopped`, 'info');
-  if (STATE.activeView==='bots') render('bots');
-  if (STATE.activeView==='dashboard') render('dashboard');
-  renderSidebarBots();
-}
-
-function restartBot(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  b.logs.push({ t:ts(), lvl:'warn', msg:'Restarting...' });
-  notify(`${b.name} restarting...`, 'info');
-  setTimeout(() => {
-    b.logs.push({ t:ts(), lvl:'ok', msg:'Bot restarted successfully' });
-    notify(`${b.name} is running`, 'success');
-    renderSidebarBots();
-  }, 1200);
-}
-
-function deleteBot(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  if (!confirm(`Delete "${b.name}"? This cannot be undone.`)) return;
-  STATE.bots = STATE.bots.filter(x=>x.id!==id);
-  notify(`${b.name} deleted`, 'info');
-  render('bots');
+  if (view === 'dashboard') {
+    const [st, bl] = await Promise.all([api.get('/stats'), api.get('/bots')]);
+    S.bots = bl.bots || [];
+    renderSidebar();
+    c.innerHTML = renderDashboard(st);
+  } else if (view === 'bots') {
+    const r = await api.get('/bots');
+    S.bots = r.bots || [];
+    renderSidebar();
+    c.innerHTML = renderBots();
+  } else if (view === 'upload') {
+    c.innerHTML = renderUpload();
+    initUpload();
+  } else if (view === 'packages') {
+    const r = await api.get('/bots');
+    S.bots = r.bots || [];
+    c.innerHTML = renderPackages();
+    initPkgInstall();
+  } else if (view === 'logs') {
+    const r = await api.get('/bots');
+    S.bots = r.bots || [];
+    c.innerHTML = renderAllLogs(arg);
+    if (arg) startLiveLog(arg);
+  } else if (view === 'settings') {
+    c.innerHTML = renderSettings();
+  } else if (view === 'bot-detail') {
+    const r = await api.get(`/bots/${arg}`);
+    if (!r.ok) { notify('Bot not found','error'); return; }
+    S.bot = r.bot;
+    renderSidebar();
+    c.innerHTML = renderBotDetail(r.bot);
+    initBotDetail(r.bot);
+  }
 }
 
 function openBot(id) {
-  STATE.selectedBot = id;
-  render('bot-detail', id);
+  S.bot = { id };
+  loadAndRender('bot-detail', id);
 }
 
-function saveEnv(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  b.env = document.getElementById('env-editor').value;
-  notify('Environment variables saved', 'success');
+/* ══════════════ DASHBOARD ══════════════ */
+function renderDashboard(st) {
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700">Dashboard</div>
+    <div class="tspace"></div>
+    <button class="bs bsb" onclick="loadAndRender('upload')">+ Upload Bot</button>
+  </div>
+  <div class="sgrid">
+    <div class="sc"><div class="sl">Total</div><div class="sv" style="color:var(--text)">${st.total}</div><div class="ss">Bots registered</div></div>
+    <div class="sc"><div class="sl">Running</div><div class="sv" style="color:var(--green)">${st.running}</div><div class="ss">Active now</div></div>
+    <div class="sc"><div class="sl">Stopped</div><div class="sv" style="color:var(--red)">${st.stopped}</div><div class="ss">Idle</div></div>
+    <div class="sc"><div class="sl">Platform</div><div class="sv" style="color:var(--accent);font-size:14px">Online</div><div class="ss">Render free tier</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><div class="pt">⚡ All Bots</div></div>
+    <div class="pb">
+      ${S.bots.length===0
+        ? `<div class="empty"><div class="ei">🤖</div><div class="et">No bots yet</div><div class="es">Upload your first bot to get started</div></div>`
+        : `<table class="dt"><thead><tr>
+            <th>Name</th><th>Status</th><th>Uptime</th><th>File</th><th>Actions</th>
+           </tr></thead><tbody>
+           ${S.bots.map(b=>`<tr>
+             <td style="color:var(--accent);cursor:pointer;font-weight:600" onclick="openBot('${b.id}')">${b.name}</td>
+             <td>${sbadge(b.status)}</td>
+             <td>${fmtUp(b.uptime)}</td>
+             <td style="color:var(--muted)">${b.file||'—'}</td>
+             <td style="display:flex;gap:5px">
+               ${b.status==='running'
+                 ?`<button class="bs bsr" onclick="botStop('${b.id}')">Stop</button>
+                   <button class="bs bsy" onclick="botRestart('${b.id}')">↺</button>`
+                 :`<button class="bs bsg" onclick="botStart('${b.id}')">Start</button>`}
+               <button class="bs" onclick="loadAndRender('logs','${b.id}')">Logs</button>
+             </td>
+           </tr>`).join('')}
+           </tbody></table>`}
+    </div>
+  </div>`;
 }
 
-function clearLog(id) {
-  const b = STATE.bots.find(x=>x.id===id);
-  if (!b) return;
-  b.logs = [];
-  const term = document.getElementById('live-log-term');
-  if (term) term.innerHTML = '';
-  notify('Log cleared', 'info');
+/* ══════════════ BOTS LIST ══════════════ */
+function renderBots() {
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700">My Bots</div>
+    <div class="tspace"></div>
+    <button class="bs bsb" onclick="loadAndRender('upload')">+ Upload</button>
+  </div>
+  ${S.bots.length===0
+    ? `<div class="empty"><div class="ei">🤖</div><div class="et">No bots yet</div></div>`
+    : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:13px">
+        ${S.bots.map(b=>`
+          <div style="background:var(--card);border:1px solid ${b.status==='running'?'#16a34a33':'var(--border)'};border-radius:11px;padding:16px;cursor:pointer" onclick="openBot('${b.id}')">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div style="font-size:22px">🤖</div>
+              <div>
+                <div style="font-family:var(--mono);font-size:13px;font-weight:600">${b.name}</div>
+                <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${b.file||'—'}</div>
+              </div>
+              <div style="flex:1"></div>
+              ${sbadge(b.status)}
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px">
+              Uptime: ${fmtUp(b.uptime)} &nbsp;·&nbsp; Auto-restart: ${b.auto_restart?'✓':'✕'}
+            </div>
+            <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
+              ${b.status==='running'
+                ?`<button class="bs bsr" onclick="botStop('${b.id}')">⬛ Stop</button>
+                  <button class="bs bsy" onclick="botRestart('${b.id}')">↺ Restart</button>`
+                :`<button class="bs bsg" onclick="botStart('${b.id}')">▶ Start</button>`}
+              <button class="bs" onclick="loadAndRender('logs','${b.id}')">Logs</button>
+              <button class="bs bsr" onclick="botDelete('${b.id}')">✕</button>
+            </div>
+          </div>`).join('')}
+       </div>`}`;
 }
 
-/* ══════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════ */
-function statusBadge(s) {
-  if (s==='running') return `<span class="badge badge-green"><span class="badge-dot"></span>Running</span>`;
-  if (s==='stopped') return `<span class="badge badge-red"><span class="badge-dot"></span>Stopped</span>`;
-  return `<span class="badge badge-yellow"><span class="badge-dot"></span>${s}</span>`;
+/* ══════════════ BOT DETAIL ══════════════ */
+function renderBotDetail(b) {
+  return `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+    <button class="bs" onclick="loadAndRender('bots')">← Back</button>
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700">${b.name}</div>
+    ${sbadge(b.status)}
+    <div class="tspace"></div>
+    <span id="det-btns">
+    ${b.status==='running'
+      ?`<button class="bs bsr" onclick="botStop('${b.id}',true)">⬛ Stop</button>
+        <button class="bs bsy" style="margin-left:5px" onclick="botRestart('${b.id}',true)">↺ Restart</button>`
+      :`<button class="bs bsg" onclick="botStart('${b.id}',true)">▶ Start</button>`}
+    </span>
+  </div>
+  <div class="tabs" id="detail-tabs">
+    <div class="tab on" data-t="overview">Overview</div>
+    <div class="tab" data-t="env">Env Vars</div>
+    <div class="tab" data-t="files">Files</div>
+    <div class="tab" data-t="livelog">Live Log</div>
+    <div class="tab" data-t="config">Config</div>
+  </div>
+  <div id="detail-body"></div>`;
 }
 
-function formatUptime(s) {
+function initBotDetail(b) {
+  document.querySelectorAll('#detail-tabs .tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('#detail-tabs .tab').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      loadDetailTab(b, t.dataset.t);
+    };
+  });
+  loadDetailTab(b, 'overview');
+}
+
+async function loadDetailTab(b, tab) {
+  const el = document.getElementById('detail-body');
+  stopLiveLog();
+
+  if (tab === 'overview') {
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <div class="panel">
+          <div class="ph"><div class="pt">Info</div></div>
+          <div class="pb">
+            <div class="rb"><div class="rbh"><span class="rbl">Status</span><span class="rbv">${b.status}</span></div></div>
+            <div class="rb"><div class="rbh"><span class="rbl">PID</span><span class="rbv">${b.pid||'—'}</span></div></div>
+            <div class="rb"><div class="rbh"><span class="rbl">Uptime</span><span class="rbv">${fmtUp(b.uptime)}</span></div></div>
+            <div class="rb"><div class="rbh"><span class="rbl">Main File</span><span class="rbv">${b.file||'—'}</span></div></div>
+            <div class="rb"><div class="rbh"><span class="rbl">Auto-restart</span><span class="rbv">${b.auto_restart?'✓ On':'✕ Off'}</span></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt">Packages (${(b.packages||[]).length})</div></div>
+          <div class="pb">
+            ${(b.packages||[]).length===0
+              ? `<div style="color:var(--muted);font-family:var(--mono);font-size:11px">No packages installed</div>`
+              : (b.packages||[]).map(p=>`<span class="badge bb" style="margin:2px">${p}</span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+
+  } else if (tab === 'env') {
+    el.innerHTML = `
+      <div class="panel">
+        <div class="ph"><div class="pt">Environment Variables</div>
+          <button class="bs bsg" onclick="saveEnv('${b.id}')">Save</button></div>
+        <div class="pb">
+          <textarea class="fta" id="env-ed" style="height:180px;font-size:12px">${b.env||''}</textarea>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:var(--mono)">One per line — KEY=VALUE</div>
+        </div>
+      </div>`;
+
+  } else if (tab === 'files') {
+    const r = await api.get(`/bots/${b.id}/files`);
+    el.innerHTML = `
+      <div class="panel">
+        <div class="ph"><div class="pt">Files</div>
+          <label style="cursor:pointer">
+            <input type="file" id="extra-upload" style="display:none" onchange="uploadExtraFile('${b.id}',this)"/>
+            <span class="bs bsb">+ Add File</span>
+          </label>
+        </div>
+        <div class="pb">
+          ${(r.files||[]).length===0
+            ? `<div class="empty"><div class="ei">📁</div><div class="et">No files</div></div>`
+            : (r.files||[]).map(f=>`
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border-radius:7px;border:1px solid var(--border);margin-bottom:6px">
+                  <div style="font-size:14px">${f.name.endsWith('.py')?'🐍':f.name.endsWith('.txt')?'📄':'📎'}</div>
+                  <div style="font-family:var(--mono);font-size:11px;flex:1">${f.name}</div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${fmtSize(f.size)}</div>
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${f.modified}</div>
+                  <button class="bs bsb" onclick="editFile('${b.id}','${f.name}')">Edit</button>
+                  <a href="/api/bots/${b.id}/files/${f.name}/download" class="bs">↓</a>
+                  <button class="bs bsr" onclick="delFile('${b.id}','${f.name}')">✕</button>
+                </div>`).join('')}
+        </div>
+      </div>`;
+
+  } else if (tab === 'livelog') {
+    el.innerHTML = `
+      <div class="panel">
+        <div class="ph">
+          <div class="pt">Live Log — <span class="pulse" style="color:var(--green)">● LIVE</span></div>
+          <button class="bs" onclick="clearLog('${b.id}')">Clear</button>
+        </div>
+        <div class="pb">
+          <div class="log" id="live-log" style="height:360px"></div>
+        </div>
+      </div>`;
+    // Load existing then stream
+    const lr = await api.get(`/bots/${b.id}/logs`);
+    const logEl = document.getElementById('live-log');
+    (lr.logs||[]).forEach(l => appendLogLine(logEl, l));
+    logEl.scrollTop = logEl.scrollHeight;
+    startLiveLog(b.id);
+
+  } else if (tab === 'config') {
+    el.innerHTML = `
+      <div class="panel">
+        <div class="ph"><div class="pt">Bot Configuration</div>
+          <button class="bs bsg" onclick="saveConfig('${b.id}')">Save</button></div>
+        <div class="pb">
+          <div class="fg"><label class="fl2">Bot Name</label>
+            <input class="fi2" id="cfg-name" value="${b.name||''}"/></div>
+          <div class="fg"><label class="fl2">Start Command</label>
+            <input class="fi2" id="cfg-cmd" value="${b.start_cmd||'python bot.py'}"/></div>
+          <div class="fg" style="display:flex;align-items:center;gap:10px">
+            <input type="checkbox" id="cfg-ar" ${b.auto_restart?'checked':''}/>
+            <label for="cfg-ar" style="font-family:var(--mono);font-size:11px;color:var(--muted)">Auto-restart on crash (Watchdog)</label>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+/* ══════════════ UPLOAD ══════════════ */
+function renderUpload() {
+  return `
+  <div style="font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:20px">Upload Bot</div>
+  <div class="panel" style="max-width:560px">
+    <div class="ph"><div class="pt">New Bot</div></div>
+    <div class="pb">
+      <div class="fg"><label class="fl2">Bot Name</label><input class="fi2" id="nb-name" placeholder="MyBot"/></div>
+      <div class="fg"><label class="fl2">Start Command</label><input class="fi2" id="nb-cmd" value="python bot.py"/></div>
+      <div class="fg">
+        <div style="display:flex;align-items:center;gap:9px">
+          <input type="checkbox" id="nb-ar"/>
+          <label for="nb-ar" style="font-family:var(--mono);font-size:11px;color:var(--muted)">Auto-restart on crash</label>
+        </div>
+      </div>
+      <div class="fg"><label class="fl2">Environment Variables</label>
+        <textarea class="fta" id="nb-env" placeholder="BOT_TOKEN=xxx&#10;ADMIN_ID=123456"></textarea></div>
+      <div class="fg"><label class="fl2">Bot File (.py or .zip)</label>
+        <div class="uzone" id="drop-zone">
+          <div class="uicon">🐍</div>
+          <div class="utitle">Drop .py or .zip here</div>
+          <div class="usub">or click to browse · max 50 MB</div>
+          <input type="file" id="fi" accept=".py,.zip" style="display:none"/>
+        </div>
+        <div id="upload-fname" style="font-family:var(--mono);font-size:11px;color:var(--green);margin-top:6px;display:none"></div>
+        <div class="prog" id="upload-prog" style="display:none"><div class="pf" id="upload-fill" style="width:0%"></div></div>
+      </div>
+      <button class="bprim" id="deploy-btn" onclick="doDeploy()">🚀 Deploy Bot</button>
+    </div>
+  </div>`;
+}
+
+let _uploadFile = null;
+function initUpload() {
+  const zone = document.getElementById('drop-zone');
+  const fi   = document.getElementById('fi');
+  zone.onclick = () => fi.click();
+  fi.onchange  = () => setFile(fi.files[0]);
+  zone.ondragover  = e => { e.preventDefault(); zone.classList.add('over'); };
+  zone.ondragleave = () => zone.classList.remove('over');
+  zone.ondrop = e => { e.preventDefault(); zone.classList.remove('over'); setFile(e.dataTransfer.files[0]); };
+}
+
+function setFile(f) {
+  if (!f) return;
+  _uploadFile = f;
+  const el = document.getElementById('upload-fname');
+  el.textContent = `✓ ${f.name} (${fmtSize(f.size)})`;
+  el.style.display = 'block';
+}
+
+async function doDeploy() {
+  const name = document.getElementById('nb-name').value.trim();
+  if (!name) { notify('Enter a bot name','error'); return; }
+  if (!_uploadFile) { notify('Select a file first','error'); return; }
+
+  const btn = document.getElementById('deploy-btn');
+  btn.disabled = true; btn.textContent = 'Deploying...';
+
+  const prog = document.getElementById('upload-prog');
+  const fill = document.getElementById('upload-fill');
+  prog.style.display = 'block';
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('start_cmd', document.getElementById('nb-cmd').value.trim() || 'python bot.py');
+  fd.append('env', document.getElementById('nb-env').value);
+  fd.append('auto_restart', document.getElementById('nb-ar').checked ? 'true' : 'false');
+  fd.append('file', _uploadFile);
+
+  const xhr = new XMLHttpRequest();
+  xhr.upload.onprogress = e => { if (e.lengthComputable) fill.style.width = (e.loaded/e.total*100)+'%'; };
+  xhr.onload = () => {
+    const r = JSON.parse(xhr.responseText);
+    if (r.ok) {
+      notify(`${name} deployed!`, 'success');
+      _uploadFile = null;
+      setTimeout(() => loadAndRender('bots'), 600);
+    } else {
+      notify(r.error || 'Deploy failed', 'error');
+      btn.disabled = false; btn.textContent = '🚀 Deploy Bot';
+    }
+  };
+  xhr.onerror = () => { notify('Network error','error'); btn.disabled=false; btn.textContent='🚀 Deploy Bot'; };
+  xhr.open('POST', '/api/bots/upload');
+  xhr.send(fd);
+}
+
+/* ══════════════ PACKAGES ══════════════ */
+function renderPackages() {
+  return `
+  <div style="font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:20px">Package Manager</div>
+  <div class="panel" style="max-width:560px">
+    <div class="ph"><div class="pt">Install Package</div></div>
+    <div class="pb">
+      <div class="fg"><label class="fl2">Target Bot</label>
+        <select class="fsel" id="pkg-bot">
+          ${S.bots.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label class="fl2">Package</label>
+        <div style="display:flex;gap:8px">
+          <input class="fi2" id="pkg-name" placeholder="requests==2.31.0" style="flex:1"/>
+          <button class="bs bsb" onclick="installPkg()">Install</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+          ${['python-telegram-bot','telethon','requests','aiohttp','pillow','cryptography','redis','pytz','sqlalchemy'].map(p=>
+            `<span class="badge bb" style="cursor:pointer" onclick="document.getElementById('pkg-name').value='${p}'">${p}</span>`
+          ).join('')}
+        </div>
+      </div>
+      <div id="pkg-out" style="display:none">
+        <div class="log" id="pkg-log" style="height:160px;margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="max-width:560px">
+    <div class="ph"><div class="pt">Installed</div></div>
+    <div class="pb">
+      <table class="dt"><thead><tr><th>Bot</th><th>Package</th><th></th></tr></thead><tbody>
+        ${S.bots.flatMap(b=>(b.packages||[]).map(p=>`
+          <tr>
+            <td style="color:var(--muted)">${b.name}</td>
+            <td><span class="badge bb">${p}</span></td>
+            <td><button class="bs bsr" onclick="removePkg('${b.id}','${p}')">Remove</button></td>
+          </tr>`)).join('') || '<tr><td colspan="3" style="color:var(--muted)">No packages</td></tr>'}
+      </tbody></table>
+    </div>
+  </div>`;
+}
+
+function initPkgInstall() {}
+
+async function installPkg() {
+  const botId = document.getElementById('pkg-bot').value;
+  const pkg   = document.getElementById('pkg-name').value.trim();
+  if (!pkg) { notify('Enter package name','error'); return; }
+
+  const out = document.getElementById('pkg-out');
+  const log = document.getElementById('pkg-log');
+  out.style.display = 'block';
+  log.innerHTML = '';
+
+  const es = new EventSource(`/api/bots/${botId}/packages/install`);
+  // We actually POST, so use fetch streaming:
+  const r = await fetch(`/api/bots/${botId}/packages/install`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ package: pkg })
+  });
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value);
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const msg = line.slice(6);
+        if (msg === '__DONE__') { notify(`${pkg} installed`, 'success'); loadAndRender('packages'); return; }
+        const div = document.createElement('div');
+        div.className = 'll';
+        const lvl = msg.startsWith('[OK]')?'o':msg.startsWith('[ERR]')?'e':'i';
+        div.innerHTML = `<span class="l${lvl}">${msg}</span>`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+  }
+}
+
+async function removePkg(botId, pkg) {
+  const r = await api.delete(`/bots/${botId}/packages/${pkg}`);
+  if (r.ok) { notify(`${pkg} removed`,'info'); loadAndRender('packages'); }
+}
+
+/* ══════════════ ALL LOGS ══════════════ */
+function renderAllLogs(botId) {
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700">Logs</div>
+    <div class="tspace"></div>
+    <select class="fsel" id="log-sel" style="width:180px" onchange="loadAndRender('logs',this.value||undefined)">
+      <option value="">Select Bot</option>
+      ${S.bots.map(b=>`<option value="${b.id}" ${b.id===botId?'selected':''}>${b.name}</option>`).join('')}
+    </select>
+  </div>
+  <div class="panel">
+    <div class="ph">
+      <div class="pt">${botId ? (S.bots.find(x=>x.id===botId)?.name||botId)+' Log' : 'Select a bot above'}</div>
+      ${botId ? `<span class="badge bg pulse">● LIVE</span>
+        <button class="bs" onclick="clearLog('${botId}')">Clear</button>` : ''}
+    </div>
+    <div class="pb"><div class="log" id="main-log" style="height:440px"></div></div>
+  </div>`;
+}
+
+/* ══════════════ SETTINGS ══════════════ */
+function renderSettings() {
+  return `
+  <div style="font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:20px">Settings</div>
+  <div class="panel" style="max-width:500px">
+    <div class="ph"><div class="pt">Change Password</div></div>
+    <div class="pb">
+      <div class="fg"><label class="fl2">Current Password</label><input class="fi2" id="cpw" type="password"/></div>
+      <div class="fg"><label class="fl2">New Password</label><input class="fi2" id="npw" type="password"/></div>
+      <button class="bprim" onclick="changePw()">Update Password</button>
+    </div>
+  </div>`;
+}
+
+async function changePw() {
+  const r = await api.post('/change-password', {
+    old: document.getElementById('cpw').value,
+    new: document.getElementById('npw').value,
+  });
+  r.ok ? notify('Password updated','success') : notify(r.error,'error');
+}
+
+/* ══════════════ BOT ACTIONS ══════════════ */
+async function botStart(id, refresh) {
+  const r = await api.post(`/bots/${id}/start`);
+  r.ok ? notify('Bot started','success') : notify(r.error,'error');
+  if (refresh) loadAndRender('bot-detail', id);
+  else refreshBotsIfNeeded();
+}
+
+async function botStop(id, refresh) {
+  await api.post(`/bots/${id}/stop`);
+  notify('Bot stopped','info');
+  if (refresh) loadAndRender('bot-detail', id);
+  else refreshBotsIfNeeded();
+}
+
+async function botRestart(id, refresh) {
+  await api.post(`/bots/${id}/restart`);
+  notify('Bot restarting...','info');
+  setTimeout(() => {
+    if (refresh) loadAndRender('bot-detail', id);
+    else refreshBotsIfNeeded();
+  }, 1200);
+}
+
+async function botDelete(id) {
+  const name = S.bots.find(x=>x.id===id)?.name || id;
+  if (!confirm(`Delete "${name}"? Cannot be undone.`)) return;
+  await api.delete(`/bots/${id}`);
+  notify(`${name} deleted`,'info');
+  loadAndRender('bots');
+}
+
+async function refreshBotsIfNeeded() {
+  if (['dashboard','bots'].includes(S.view)) loadAndRender(S.view);
+}
+
+/* ══════════════ ENV / CONFIG SAVE ══════════════ */
+async function saveEnv(id) {
+  const env = document.getElementById('env-ed').value;
+  const r = await api.patch(`/bots/${id}`, { env });
+  r.ok ? notify('Env saved','success') : notify(r.error,'error');
+}
+
+async function saveConfig(id) {
+  const d = {
+    name:         document.getElementById('cfg-name').value.trim(),
+    start_cmd:    document.getElementById('cfg-cmd').value.trim(),
+    auto_restart: document.getElementById('cfg-ar').checked,
+  };
+  const r = await api.patch(`/bots/${id}`, d);
+  r.ok ? notify('Config saved','success') : notify(r.error,'error');
+}
+
+/* ══════════════ FILES ══════════════ */
+async function editFile(botId, name) {
+  const r = await api.get(`/bots/${botId}/files/${name}`);
+  if (!r.ok) { notify('Cannot read file','error'); return; }
+  _editorBot  = botId;
+  _editorFile = name;
+  document.getElementById('editor-title').textContent = `Edit — ${name}`;
+  document.getElementById('editor-code').value = r.content;
+  document.getElementById('editor-modal').classList.add('on');
+}
+
+function closeEditor() {
+  document.getElementById('editor-modal').classList.remove('on');
+  _editorBot = _editorFile = null;
+}
+
+async function saveFile() {
+  const content = document.getElementById('editor-code').value;
+  const r = await api.put(`/bots/${_editorBot}/files/${_editorFile}`, { content });
+  if (r.ok) { notify('File saved','success'); closeEditor(); }
+  else notify(r.error,'error');
+}
+
+async function delFile(botId, name) {
+  if (!confirm(`Delete ${name}?`)) return;
+  const r = await api.delete(`/bots/${botId}/files/${name}`);
+  if (r.ok) { notify(`${name} deleted`,'info'); loadAndRender('bot-detail', botId); }
+}
+
+async function uploadExtraFile(botId, input) {
+  const f = input.files[0];
+  if (!f) return;
+  const fd = new FormData();
+  fd.append('file', f);
+  const r = await fetch(`/api/bots/${botId}/upload-file`, { method:'POST', body: fd });
+  const j = await r.json();
+  j.ok ? notify(`${j.name} uploaded`,'success') : notify(j.error,'error');
+  loadAndRender('bot-detail', botId);
+}
+
+/* ══════════════ LIVE LOG ══════════════ */
+function startLiveLog(botId) {
+  stopLiveLog();
+  _liveLogEs = new EventSource(`/api/bots/${botId}/logs/stream`);
+  _liveLogEs.onmessage = e => {
+    const logEl = document.getElementById('live-log') || document.getElementById('main-log');
+    if (!logEl) { stopLiveLog(); return; }
+    try {
+      const l = JSON.parse(e.data);
+      appendLogLine(logEl, l);
+      logEl.scrollTop = logEl.scrollHeight;
+    } catch {}
+  };
+}
+
+function stopLiveLog() {
+  if (_liveLogEs) { _liveLogEs.close(); _liveLogEs = null; }
+}
+
+function appendLogLine(el, l) {
+  const div = document.createElement('div');
+  div.className = 'll';
+  const cls = l.lvl==='ok'?'o':l.lvl==='warn'?'w':l.lvl==='err'?'e':'i';
+  div.innerHTML = `<span class="lt">${l.t}</span><span class="l${cls}">[${l.lvl.toUpperCase()}]</span><span class="lm">${escHtml(l.msg)}</span>`;
+  el.appendChild(div);
+}
+
+async function clearLog(botId) {
+  await api.delete(`/bots/${botId}/logs`);
+  const el = document.getElementById('live-log') || document.getElementById('main-log');
+  if (el) el.innerHTML = '';
+  notify('Log cleared','info');
+}
+
+/* ══════════════ STATS POLL ══════════════ */
+function startStatsPoll() {
+  clearInterval(_statsInterval);
+  _statsInterval = setInterval(async () => {
+    if (S.view === 'dashboard') {
+      const [st, bl] = await Promise.all([api.get('/stats'), api.get('/bots')]);
+      S.bots = bl.bots || [];
+      renderSidebar();
+      document.getElementById('content').innerHTML = renderDashboard(st);
+    } else {
+      const r = await api.get('/bots');
+      S.bots = r.bots || [];
+      renderSidebar();
+    }
+  }, 8000);
+}
+
+/* ══════════════ HELPERS ══════════════ */
+function sbadge(s) {
+  if (s==='running') return `<span class="badge bg"><span class="bd"></span>Running</span>`;
+  return `<span class="badge br"><span class="bd"></span>Stopped</span>`;
+}
+function fmtUp(s) {
   if (!s) return '—';
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
-  return h ? `${h}h ${m}m` : `${m}m`;
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  return h?`${h}h ${m}m`:`${m}m`;
 }
-
-function attachHandlers() {}
-
-/* ══════════════════════════════════════════════
-   LIVE STATS UPDATER
-══════════════════════════════════════════════ */
-function startLiveUpdates() {
-  setInterval(() => {
-    STATE.bots.forEach(b => {
-      if (b.status !== 'running') return;
-      b.cpu = Math.max(0.5, Math.min(95, b.cpu + (Math.random()-0.5)*2));
-      b.cpu = +b.cpu.toFixed(1);
-      b.ram = Math.max(20, Math.min(200, b.ram + Math.floor((Math.random()-0.5)*8)));
-      b.uptime += 5;
-    });
-    if (STATE.activeView === 'dashboard') render('dashboard');
-    renderSidebarBots();
-  }, 5000);
+function fmtSize(b) {
+  if (b<1024) return b+'B';
+  if (b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>
