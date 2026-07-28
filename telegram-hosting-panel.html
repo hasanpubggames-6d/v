@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PyHost — Telegram Bot Hosting</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:        #0a0c10;
+    --surface:   #0f1117;
+    --card:      #13161e;
+    --border:    #1e2230;
+    --border2:   #252a3a;
+    --accent:    #3b82f6;
+    --accent2:   #6366f1;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --yellow:    #eab308;
+    --orange:    #f97316;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --dim:       #334155;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    z-index: 999;
+  }
+  .login-box {
+    width: 380px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .login-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 22px; font-weight: 700;
+    color: var(--text);
+  }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .login-sub { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+  .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  .field-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-family: var(--mono); font-size: 13px;
+    color: var(--text); outline: none; transition: border-color .2s;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .btn-primary {
+    width: 100%; padding: 11px; background: var(--accent); border: none;
+    border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: opacity .2s;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .login-hint { font-size: 11px; color: var(--muted); text-align: center; font-family: var(--mono); }
+  .login-err { font-size: 12px; color: var(--red); text-align: center; font-family: var(--mono); display: none; }
+
+  /* ── APP SHELL ── */
+  #app { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+  #app.visible { display: flex; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    height: 54px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
+  }
+  .topbar-logo { font-family: var(--mono); font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .topbar-logo .logo-dot { width: 8px; height: 8px; }
+  .topbar-spacer { flex: 1; }
+  .topbar-user { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .btn-logout {
+    background: none; border: 1px solid var(--border2); border-radius: 6px;
+    padding: 5px 12px; color: var(--muted); font-family: var(--mono); font-size: 11px;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── MAIN LAYOUT ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+  }
+  .sidebar-section-label {
+    padding: 18px 16px 6px; font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em; font-family: var(--mono);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; font-size: 13px; color: var(--muted);
+    cursor: pointer; border-radius: 0; transition: all .15s;
+    font-family: var(--sans); font-weight: 500; border-left: 2px solid transparent;
+  }
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { background: var(--card); color: var(--accent); border-left-color: var(--accent); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-bot-list { padding: 8px; flex: 1; overflow-y: auto; }
+  .bot-nav-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-radius: 8px; cursor: pointer; transition: background .15s; margin-bottom: 2px;
+  }
+  .bot-nav-item:hover { background: var(--card); }
+  .bot-nav-item.active { background: var(--border); }
+  .bot-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .bot-nav-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── PANEL / CARD ── */
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .panel-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+  .panel-body { padding: 20px; }
+
+  /* ── STATS GRID ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-value { font-size: 26px; font-weight: 700; font-family: var(--mono); margin-top: 6px; }
+  .stat-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 3px; }
+
+  /* ── BOT CARD ── */
+  .bot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .bot-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; cursor: pointer; transition: border-color .2s;
+  }
+  .bot-card:hover { border-color: var(--border2); }
+  .bot-card.running { border-color: #16a34a44; }
+  .bot-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .bot-card-icon {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .bot-card-name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text); }
+  .bot-card-file { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+    border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono);
+  }
+  .badge-green { background: #16a34a22; color: var(--green); border: 1px solid #16a34a44; }
+  .badge-red { background: #dc262622; color: var(--red); border: 1px solid #dc262644; }
+  .badge-yellow { background: #ca8a0422; color: var(--yellow); border: 1px solid #ca8a0444; }
+  .badge-blue { background: #3b82f622; color: var(--accent); border: 1px solid #3b82f644; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .bot-card-meta { display: flex; gap: 8px; align-items: center; }
+  .bot-card-actions { display: flex; gap: 6px; margin-top: 14px; }
+  .btn-sm {
+    padding: 5px 12px; border-radius: 6px; font-family: var(--mono); font-size: 11px;
+    font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--surface);
+    color: var(--text); transition: all .15s;
+  }
+  .btn-sm:hover { background: var(--border); }
+  .btn-sm.green { border-color: #16a34a55; color: var(--green); }
+  .btn-sm.green:hover { background: #16a34a22; }
+  .btn-sm.red { border-color: #dc262655; color: var(--red); }
+  .btn-sm.red:hover { background: #dc262622; }
+  .btn-sm.blue { border-color: #3b82f655; color: var(--accent); }
+  .btn-sm.blue:hover { background: #3b82f622; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border2); border-radius: 12px;
+    padding: 36px; text-align: center; cursor: pointer;
+    transition: all .2s; background: var(--surface);
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: #3b82f608; }
+  .upload-zone-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-zone-title { font-family: var(--mono); font-size: 14px; color: var(--text); margin-bottom: 6px; }
+  .upload-zone-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* ── LOG TERMINAL ── */
+  .log-terminal {
+    background: #080a0e; border-radius: 10px; padding: 16px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    height: 320px; overflow-y: auto; color: #a0aec0;
+    border: 1px solid var(--border);
+  }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-level-info { color: var(--accent); }
+  .log-level-warn { color: var(--yellow); }
+  .log-level-err  { color: var(--red); }
+  .log-level-ok   { color: var(--green); }
+  .log-msg { color: #cbd5e1; }
+
+  /* ── RESOURCE BARS ── */
+  .res-bar-wrap { margin-bottom: 14px; }
+  .res-bar-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .res-bar-label { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .res-bar-val { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .res-bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .res-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+  /* ── FILE LIST ── */
+  .file-list { display: flex; flex-direction: column; gap: 6px; }
+  .file-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .file-icon { font-size: 16px; }
+  .file-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; }
+  .file-size { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .file-actions { display: flex; gap: 6px; }
+
+  /* ── FORM FIELDS ── */
+  .form-group { margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 13px; font-family: var(--mono); font-size: 12px;
+    color: var(--text); outline: none; transition: border-color .2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select { appearance: none; }
+  .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; font-family: var(--mono); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: flex; align-items: center; justify-content: center; z-index: 500;
+  }
+  .modal-box {
+    background: var(--card); border: 1px solid var(--border2); border-radius: 16px;
+    padding: 28px; width: 480px; max-width: 96vw;
+  }
+  .modal-title { font-family: var(--mono); font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+
+  /* ── PROGRESS ── */
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width .3s; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    padding: 10px 14px; text-align: left; font-family: var(--mono); font-size: 10px;
+    font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 10px 14px; font-family: var(--mono); font-size: 12px; color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab {
+    padding: 9px 18px; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s; margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 48px; margin-bottom: 14px; opacity: .4; }
+  .empty-title { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--dim); }
+
+  /* ── PULSE ANIMATION ── */
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* ── NOTIFICATION ── */
+  .notif-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+  .notif {
+    background: var(--card); border: 1px solid var(--border2); border-radius: 10px;
+    padding: 12px 18px; font-family: var(--mono); font-size: 12px; color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+    animation: slideIn .2s ease; pointer-events: all;
+    min-width: 260px;
+  }
+  .notif.success { border-left: 3px solid var(--green); }
+  .notif.error   { border-left: 3px solid var(--red); }
+  .notif.info    { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .sidebar { width: 180px; }
+  }
+  @media (max-width: 650px) {
+    .sidebar { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div>
+      <div class="login-logo"><div class="logo-dot"></div>PyHost</div>
+      <div class="login-sub" style="margin-top:6px">Telegram Bot Hosting Platform</div>
+    </div>
+    <div>
+      <div class="field-label">Username</div>
+      <input class="field-input" id="login-user" type="text" placeholder="admin" autocomplete="off"/>
+    </div>
+    <div>
+      <div class="field-label">Password</div>
+      <input class="field-input" id="login-pass" type="password" placeholder="••••••••"/>
+    </div>
+    <button class="btn-primary" id="login-btn">Sign In</button>
+    <div class="login-err" id="login-err">Invalid credentials</div>
+    <div class="login-hint">Default: admin / admin123</div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo"><div class="logo-dot"></div>PyHost</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user" id="tb-user"></div>
+    <button class="btn-logout" id="logout-btn">Logout</button>
+  </div>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section-label">Navigation</div>
+      <div class="nav-item active" data-view="dashboard"><span class="nav-icon">◈</span>Dashboard</div>
+      <div class="nav-item" data-view="bots"><span class="nav-icon">🤖</span>My Bots</div>
+      <div class="nav-item" data-view="upload"><span class="nav-icon">↑</span>Upload Bot</div>
+      <div class="nav-item" data-view="packages"><span class="nav-icon">📦</span>Packages</div>
+      <div class="nav-item" data-view="logs"><span class="nav-icon">▤</span>Logs</div>
+      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</div>
+      <div class="sidebar-section-label" style="margin-top:10px">Running Bots</div>
+      <div class="sidebar-bot-list" id="sidebar-bots"></div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="main-content"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION STACK -->
+<div class="notif-stack" id="notif-stack"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+const STATE = {
+  user: null,
+  bots: [],
+  logs: {},
+  activeView: 'dashboard',
+  selectedBot: null,
+  packages: {},
+  uploadProgress: 0,
+};
+
+const USERS = { admin: 'admin123', hassan: 'host2025' };
+
+/* ══════════════════════════════════════════════
+   SAMPLE BOTS
+══════════════════════════════════════════════ */
+function seedBots() {
+  STATE.bots = [
+    {
+      id: 'bot_001', name: 'SalesBot', file: 'sales_bot.py', token: '7123456789:AAF...',
+      status: 'running', cpu: 4.2, ram: 48, uptime: 14400,
+      startCmd: 'python sales_bot.py', packages: ['python-telegram-bot','requests'],
+      env: 'BOT_TOKEN=xxx\nADMIN_ID=123456',
+      created: Date.now() - 86400000,
+      logs: [
+        { t: ts(), lvl:'ok',   msg:'Bot started successfully' },
+        { t: ts(), lvl:'info', msg:'Polling for updates...' },
+        { t: ts(), lvl:'info', msg:'User 123456 sent /start' },
+        { t: ts(), lvl:'ok',   msg:'Replied to /start' },
+      ]
+    },
+    {
+      id: 'bot_002', name: 'AccountBot', file: 'account_bot.py', token: '7987654321:BBG...',
+      status: 'running', cpu: 2.8, ram: 62, uptime: 7200,
+      startCmd: 'python account_bot.py', packages: ['telethon','python-telegram-bot'],
+      env: 'API_ID=12345\nAPI_HASH=abcdef',
+      created: Date.now() - 43200000,
+      logs: [
+        { t: ts(), lvl:'ok',   msg:'Telethon session loaded' },
+        { t: ts(), lvl:'info', msg:'Listening for /buy commands' },
+        { t: ts(), lvl:'warn', msg:'Payment timeout on order #44' },
+        { t: ts(), lvl:'ok',   msg:'Session verified — code relayed' },
+      ]
+    },
+    {
+      id: 'bot_003', name: 'NotifyBot', file: 'notify.py', token: '7555444333:CCH...',
+      status: 'stopped', cpu: 0, ram: 0, uptime: 0,
+      startCmd: 'python notify.py', packages: ['python-telegram-bot'],
+      env: '',
+      created: Date.now() - 172800000,
+      logs: [
+        { t: ts(), lvl:'ok',   msg:'Bot started' },
+        { t: ts(), lvl:'err',  msg:'ConnectionError: timeout' },
+        { t: ts(), lvl:'err',  msg:'Bot crashed — watchdog will retry' },
+      ]
+    }
+  ];
+}
+
+function ts() { return new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
+
+/* ══════════════════════════════════════════════
+   NOTIFICATION
+══════════════════════════════════════════════ */
+function notify(msg, type='info') {
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  const el = document.createElement('div');
+  el.className = `notif ${type}`;
+  el.innerHTML = `<span>${icons[type]||'•'}</span><span>${msg}</span>`;
+  document.getElementById('notif-stack').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ══════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════ */
+document.getElementById('login-btn').onclick = doLogin;
+document.getElementById('login-pass').onkeydown = e => e.key==='Enter' && doLogin();
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (USERS[u] && USERS[u] === p) {
+    STATE.user = u;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('tb-user').textContent = u;
+    seedBots();
+    render('dashboard');
+    startLiveUpdates();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+document.getElementById('logout-btn').onclick = () => {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+  STATE.user = null;
+};
+
+/* ══════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════ */
+document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+  el.onclick = () => render(el.dataset.view);
+});
+
+function setActiveNav(view) {
+  document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER ROUTER
+══════════════════════════════════════════════ */
+function render(view, arg) {
+  STATE.activeView = view;
+  setActiveNav(view);
+  renderSidebarBots();
+  const c = document.getElementById('main-content');
+  if (view === 'dashboard') c.innerHTML = renderDashboard();
+  else if (view === 'bots')  c.innerHTML = renderBots();
+  else if (view === 'upload') { c.innerHTML = renderUpload(); initUpload(); }
+  else if (view === 'packages') c.innerHTML = renderPackages();
+  else if (view === 'logs')  c.innerHTML = renderLogs(arg);
+  else if (view === 'settings') c.innerHTML = renderSettings();
+  else if (view === 'bot-detail') { c.innerHTML = renderBotDetail(arg); initBotDetail(arg); }
+  attachHandlers();
+}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR BOT LIST
+══════════════════════════════════════════════ */
+function renderSidebarBots() {
+  const el = document.getElementById('sidebar-bots');
+  if (!el) return;
+  el.innerHTML = STATE.bots.map(b => `
+    <div class="bot-nav-item ${STATE.selectedBot===b.id?'active':''}" onclick="openBot('${b.id}')">
+      <div class="bot-status-dot" style="background:${b.status==='running'?'#22c55e':'#ef4444'}"></div>
+      <div class="bot-nav-name">${b.name}</div>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════ */
+function renderDashboard() {
+  const running = STATE.bots.filter(b=>b.status==='running').length;
+  const stopped = STATE.bots.filter(b=>b.status==='stopped').length;
+  const avgCpu = (STATE.bots.reduce((a,b)=>a+b.cpu,0)/Math.max(STATE.bots.length,1)).toFixed(1);
+  const totalRam = STATE.bots.reduce((a,b)=>a+b.ram,0);
+  return `
+    <div style="margin-bottom:22px">
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text)">Dashboard</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Platform overview — ${new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Bots</div>
+        <div class="stat-value" style="color:var(--text)">${STATE.bots.length}</div>
+        <div class="stat-sub">Registered</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Running</div>
+        <div class="stat-value" style="color:var(--green)">${running}</div>
+        <div class="stat-sub">Active right now</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg CPU</div>
+        <div class="stat-value" style="color:var(--accent)">${avgCpu}%</div>
+        <div class="stat-sub">Across all bots</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">RAM Used</div>
+        <div class="stat-value" style="color:var(--orange)">${totalRam} MB</div>
+        <div class="stat-sub">Combined</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ Bot Status</div>
+        <button class="btn-sm blue" onclick="render('upload')">+ Upload Bot</button>
+      </div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr>
+            <th>Name</th><th>Status</th><th>CPU</th><th>RAM</th><th>Uptime</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            ${STATE.bots.map(b=>`
+              <tr>
+                <td style="font-weight:600;cursor:pointer;color:var(--accent)" onclick="openBot('${b.id}')">${b.name}</td>
+                <td>${statusBadge(b.status)}</td>
+                <td style="color:${b.cpu>50?'var(--orange)':'var(--text)'}">${b.cpu}%</td>
+                <td>${b.ram} MB</td>
+                <td>${formatUptime(b.uptime)}</td>
+                <td style="display:flex;gap:6px">
+                  ${b.status==='running'
+                    ? `<button class="btn-sm red" onclick="stopBot('${b.id}')">Stop</button>`
+                    : `<button class="btn-sm green" onclick="startBot('${b.id}')">Start</button>`}
+                  <button class="btn-sm" onclick="render('logs','${b.id}')">Logs</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">▤ Recent Log Activity</div></div>
+      <div class="panel-body">
+        <div class="log-terminal" id="dash-log">
+          ${STATE.bots.flatMap(b=>b.logs.slice(-3).map(l=>`
+            <div class="log-line">
+              <span class="log-time">${l.t}</span>
+              <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
+              <span style="color:var(--muted)">[${b.name}]</span>
+              <span class="log-msg">${l.msg}</span>
+            </div>
+          `)).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   BOTS LIST
+══════════════════════════════════════════════ */
+function renderBots() {
+  return `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700">My Bots</div>
+      <div class="topbar-spacer"></div>
+      <button class="btn-sm blue" onclick="render('upload')">+ Upload New Bot</button>
+    </div>
+    ${STATE.bots.length === 0 ? `
+      <div class="empty-state">
+        <div class="empty-icon">🤖</div>
+        <div class="empty-title">No bots yet</div>
+        <div class="empty-sub">Upload your first Python bot to get started</div>
+      </div>
+    ` : `
+      <div class="bot-grid">
+        ${STATE.bots.map(b=>`
+          <div class="bot-card ${b.status}" onclick="openBot('${b.id}')">
+            <div class="bot-card-header">
+              <div class="bot-card-icon">🤖</div>
+              <div>
+                <div class="bot-card-name">${b.name}</div>
+                <div class="bot-card-file">${b.file}</div>
+              </div>
+            </div>
+            <div class="bot-card-meta">
+              ${statusBadge(b.status)}
+              <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">↑ ${formatUptime(b.uptime)}</span>
+            </div>
+            <div style="margin-top:12px">
+              <div class="res-bar-wrap" style="margin-bottom:8px">
+                <div class="res-bar-header">
+                  <span class="res-bar-label">CPU</span>
+                  <span class="res-bar-val" style="color:var(--accent)">${b.cpu}%</span>
+                </div>
+                <div class="res-bar-track"><div class="res-bar-fill" style="width:${b.cpu}%;background:var(--accent)"></div></div>
+              </div>
+              <div class="res-bar-wrap">
+                <div class="res-bar-header">
+                  <span class="res-bar-label">RAM</span>
+                  <span class="res-bar-val" style="color:var(--orange)">${b.ram} MB</span>
+                </div>
+                <div class="res-bar-track"><div class="res-bar-fill" style="width:${Math.min(b.ram/2,100)}%;background:var(--orange)"></div></div>
+              </div>
+            </div>
+            <div class="bot-card-actions" onclick="event.stopPropagation()">
+              ${b.status==='running'
+                ? `<button class="btn-sm red" onclick="stopBot('${b.id}')">⬛ Stop</button>
+                   <button class="btn-sm yellow" onclick="restartBot('${b.id}')">↺ Restart</button>`
+                : `<button class="btn-sm green" onclick="startBot('${b.id}')">▶ Start</button>`}
+              <button class="btn-sm" onclick="render('logs','${b.id}')">Logs</button>
+              <button class="btn-sm red" onclick="deleteBot('${b.id}')">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   BOT DETAIL
+══════════════════════════════════════════════ */
+function renderBotDetail(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return '<div class="empty-state"><div class="empty-title">Bot not found</div></div>';
+  return `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <button class="btn-sm" onclick="render('bots')">← Back</button>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700">${b.name}</div>
+      ${statusBadge(b.status)}
+      <div class="topbar-spacer"></div>
+      ${b.status==='running'
+        ? `<button class="btn-sm red" onclick="stopBot('${b.id}');setTimeout(()=>render('bot-detail','${b.id}'),400)">⬛ Stop</button>
+           <button class="btn-sm yellow" onclick="restartBot('${b.id}')">↺ Restart</button>`
+        : `<button class="btn-sm green" onclick="startBot('${b.id}');setTimeout(()=>render('bot-detail','${b.id}'),400)">▶ Start</button>`}
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="env">Environment</div>
+      <div class="tab" data-tab="files">Files</div>
+      <div class="tab" data-tab="livelog">Live Logs</div>
+    </div>
+
+    <div id="tab-content">
+      <div id="tab-overview">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Resources</div></div>
+            <div class="panel-body">
+              <div class="res-bar-wrap">
+                <div class="res-bar-header">
+                  <span class="res-bar-label">CPU Usage</span>
+                  <span class="res-bar-val" style="color:var(--accent)">${b.cpu}%</span>
+                </div>
+                <div class="res-bar-track"><div class="res-bar-fill" style="width:${b.cpu}%;background:var(--accent)"></div></div>
+              </div>
+              <div class="res-bar-wrap">
+                <div class="res-bar-header">
+                  <span class="res-bar-label">Memory</span>
+                  <span class="res-bar-val" style="color:var(--orange)">${b.ram} MB</span>
+                </div>
+                <div class="res-bar-track"><div class="res-bar-fill" style="width:${Math.min(b.ram/2,100)}%;background:var(--orange)"></div></div>
+              </div>
+              <div style="margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--muted)">
+                Uptime: <span style="color:var(--text)">${formatUptime(b.uptime)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Config</div></div>
+            <div class="panel-body">
+              <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px">Start Command</div>
+              <div style="font-family:var(--mono);font-size:12px;background:var(--surface);padding:8px 12px;border-radius:6px;border:1px solid var(--border)">${b.startCmd}</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:6px">Packages (${b.packages.length})</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${b.packages.map(p=>`<span class="badge badge-blue">${p}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-env" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Environment Variables</div>
+            <button class="btn-sm green" onclick="saveEnv('${b.id}')">Save</button>
+          </div>
+          <div class="panel-body">
+            <textarea class="form-textarea" id="env-editor" style="height:200px;font-size:12px">${b.env}</textarea>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px">One per line: KEY=VALUE</div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-files" style="display:none">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Bot Files</div></div>
+          <div class="panel-body">
+            <div class="file-list">
+              <div class="file-item">
+                <div class="file-icon">🐍</div>
+                <div class="file-name">${b.file}</div>
+                <div class="file-size">12.4 KB</div>
+                <div class="file-actions">
+                  <button class="btn-sm blue">Edit</button>
+                  <button class="btn-sm">Download</button>
+                </div>
+              </div>
+              <div class="file-item">
+                <div class="file-icon">📄</div>
+                <div class="file-name">requirements.txt</div>
+                <div class="file-size">128 B</div>
+                <div class="file-actions">
+                  <button class="btn-sm blue">Edit</button>
+                  <button class="btn-sm">Download</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-livelog" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Live Output — <span class="pulse" style="color:var(--green)">● LIVE</span></div>
+            <button class="btn-sm" onclick="clearLog('${b.id}')">Clear</button>
+          </div>
+          <div class="panel-body">
+            <div class="log-terminal" id="live-log-term">
+              ${b.logs.map(l=>`
+                <div class="log-line">
+                  <span class="log-time">${l.t}</span>
+                  <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
+                  <span class="log-msg">${l.msg}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initBotDetail(id) {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      ['overview','env','files','livelog'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (el) el.style.display = t === tab.dataset.tab ? 'block' : 'none';
+      });
+      if (tab.dataset.tab === 'livelog') startLiveLog(id);
+    };
+  });
+}
+
+let liveLogInterval = null;
+function startLiveLog(id) {
+  clearInterval(liveLogInterval);
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b || b.status !== 'running') return;
+  const MSGS = [
+    { lvl:'info', msg:'Processing update...' },
+    { lvl:'ok',   msg:'Handled command successfully' },
+    { lvl:'info', msg:'Polling cycle complete' },
+    { lvl:'warn', msg:'Slow response from Telegram API' },
+    { lvl:'info', msg:'User session verified' },
+  ];
+  liveLogInterval = setInterval(() => {
+    const term = document.getElementById('live-log-term');
+    if (!term) { clearInterval(liveLogInterval); return; }
+    const m = MSGS[Math.floor(Math.random()*MSGS.length)];
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-time">${ts()}</span><span class="log-level-${m.lvl}">[${m.lvl.toUpperCase()}]</span><span class="log-msg">${m.msg}</span>`;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+  }, 1800);
+}
+
+/* ══════════════════════════════════════════════
+   UPLOAD VIEW
+══════════════════════════════════════════════ */
+function renderUpload() {
+  return `
+    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Upload Bot</div>
+    <div class="panel" style="max-width:600px">
+      <div class="panel-header"><div class="panel-title">Bot Details</div></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Bot Name</label>
+          <input class="form-input" id="new-bot-name" placeholder="MyTelegramBot"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bot Token</label>
+          <input class="form-input" id="new-bot-token" placeholder="7123456789:AAF..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Command</label>
+          <input class="form-input" id="new-bot-cmd" placeholder="python bot.py" value="python bot.py"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Environment Variables</label>
+          <textarea class="form-textarea" id="new-bot-env" placeholder="BOT_TOKEN=xxx&#10;ADMIN_ID=123456"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bot File</label>
+          <div class="upload-zone" id="drop-zone">
+            <div class="upload-zone-icon">🐍</div>
+            <div class="upload-zone-title">Drop your .py or .zip file here</div>
+            <div class="upload-zone-sub">or click to browse — max 50 MB</div>
+            <input type="file" id="file-input" accept=".py,.zip" style="display:none"/>
+          </div>
+          <div id="upload-file-name" style="font-family:var(--mono);font-size:12px;color:var(--green);margin-top:8px;display:none"></div>
+          <div class="progress-bar" id="upload-progress" style="display:none"><div class="progress-fill" id="upload-fill" style="width:0%"></div></div>
+        </div>
+        <button class="btn-primary" id="deploy-btn" onclick="deployBot()">🚀 Deploy Bot</button>
+      </div>
+    </div>
+  `;
+}
+
+function initUpload() {
+  const zone = document.getElementById('drop-zone');
+  const fi   = document.getElementById('file-input');
+  if (!zone || !fi) return;
+
+  zone.onclick = () => fi.click();
+  fi.onchange = () => handleFile(fi.files[0]);
+
+  zone.ondragover = e => { e.preventDefault(); zone.classList.add('dragover'); };
+  zone.ondragleave = () => zone.classList.remove('dragover');
+  zone.ondrop = e => { e.preventDefault(); zone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); };
+}
+
+let uploadedFile = null;
+function handleFile(file) {
+  if (!file) return;
+  uploadedFile = file;
+  const nameEl = document.getElementById('upload-file-name');
+  nameEl.textContent = `✓ ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  nameEl.style.display = 'block';
+  // Simulate progress
+  const bar = document.getElementById('upload-progress');
+  const fill = document.getElementById('upload-fill');
+  bar.style.display = 'block';
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random()*25;
+    if (p >= 100) { p = 100; clearInterval(iv); }
+    fill.style.width = p + '%';
+  }, 120);
+}
+
+function deployBot() {
+  const name = document.getElementById('new-bot-name').value.trim();
+  const token = document.getElementById('new-bot-token').value.trim();
+  const cmd   = document.getElementById('new-bot-cmd').value.trim();
+  const env   = document.getElementById('new-bot-env').value.trim();
+
+  if (!name) { notify('Enter a bot name', 'error'); return; }
+  if (!uploadedFile && !name) { notify('Upload a bot file', 'error'); return; }
+
+  const newBot = {
+    id: 'bot_' + Date.now(),
+    name, token, startCmd: cmd || 'python bot.py',
+    file: uploadedFile ? uploadedFile.name : 'bot.py',
+    status: 'stopped', cpu: 0, ram: 0, uptime: 0,
+    packages: ['python-telegram-bot'], env,
+    created: Date.now(), logs: [{ t: ts(), lvl:'ok', msg:'Bot registered — ready to start' }]
+  };
+  STATE.bots.push(newBot);
+  uploadedFile = null;
+  notify(`${name} deployed successfully!`, 'success');
+  setTimeout(() => render('bots'), 600);
+}
+
+/* ══════════════════════════════════════════════
+   PACKAGES VIEW
+══════════════════════════════════════════════ */
+const COMMON_PKGS = ['python-telegram-bot','telethon','requests','aiohttp','sqlalchemy','redis','celery','pillow','cryptography','pytz'];
+
+function renderPackages() {
+  return `
+    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Package Manager</div>
+    <div class="panel" style="max-width:580px">
+      <div class="panel-header"><div class="panel-title">Install Package</div></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Target Bot</label>
+          <select class="form-select" id="pkg-target-bot">
+            ${STATE.bots.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Package Name</label>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="pkg-name" placeholder="e.g. requests==2.31.0" style="flex:1"/>
+            <button class="btn-sm blue" onclick="installPkg()">Install</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+          ${COMMON_PKGS.map(p=>`<span class="badge badge-blue" style="cursor:pointer" onclick="document.getElementById('pkg-name').value='${p}'">${p}</span>`).join('')}
+        </div>
+        <div id="pkg-output" style="display:none;margin-top:16px">
+          <div class="log-terminal" id="pkg-log" style="height:160px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="max-width:580px">
+      <div class="panel-header"><div class="panel-title">Installed Packages</div></div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr><th>Bot</th><th>Package</th><th>Action</th></tr></thead>
+          <tbody>
+            ${STATE.bots.flatMap(b=>b.packages.map(p=>`
+              <tr>
+                <td style="color:var(--muted)">${b.name}</td>
+                <td><span class="badge badge-blue">${p}</span></td>
+                <td><button class="btn-sm red" onclick="removePkg('${b.id}','${p}')">Remove</button></td>
+              </tr>
+            `)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function installPkg() {
+  const botId = document.getElementById('pkg-target-bot').value;
+  const pkg   = document.getElementById('pkg-name').value.trim();
+  if (!pkg) { notify('Enter a package name', 'error'); return; }
+  const b = STATE.bots.find(x=>x.id===botId);
+  if (!b) return;
+  const out = document.getElementById('pkg-output');
+  const log = document.getElementById('pkg-log');
+  out.style.display = 'block';
+  log.innerHTML = '';
+  const steps = [
+    `<span class="log-level-info">[pip]</span> <span class="log-msg">Resolving ${pkg}...</span>`,
+    `<span class="log-level-info">[pip]</span> <span class="log-msg">Downloading ${pkg}...</span>`,
+    `<span class="log-level-info">[pip]</span> <span class="log-msg">Installing collected packages: ${pkg}</span>`,
+    `<span class="log-level-ok">[pip]</span> <span class="log-msg">Successfully installed ${pkg} ✓</span>`,
+  ];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i >= steps.length) {
+      clearInterval(iv);
+      if (!b.packages.includes(pkg.split('==')[0])) b.packages.push(pkg.split('==')[0]);
+      notify(`${pkg} installed on ${b.name}`, 'success');
+      return;
+    }
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-time">${ts()}</span>${steps[i]}`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+    i++;
+  }, 700);
+}
+
+function removePkg(botId, pkg) {
+  const b = STATE.bots.find(x=>x.id===botId);
+  if (!b) return;
+  b.packages = b.packages.filter(p=>p!==pkg);
+  notify(`Removed ${pkg} from ${b.name}`, 'info');
+  render('packages');
+}
+
+/* ══════════════════════════════════════════════
+   LOGS VIEW
+══════════════════════════════════════════════ */
+function renderLogs(botId) {
+  const b = botId ? STATE.bots.find(x=>x.id===botId) : null;
+  return `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700">Logs</div>
+      <div class="topbar-spacer"></div>
+      <select class="form-select" id="log-bot-select" style="width:200px" onchange="render('logs',this.value||undefined)">
+        <option value="">All Bots</option>
+        ${STATE.bots.map(b=>`<option value="${b.id}" ${b.id===botId?'selected':''}>${b.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">${b ? b.name+' Logs' : 'All Logs'}</div>
+        <span class="badge badge-green pulse">● LIVE</span>
+      </div>
+      <div class="panel-body">
+        <div class="log-terminal" id="main-log-term">
+          ${(b ? b.logs : STATE.bots.flatMap(bot=>bot.logs.map(l=>({...l,_bot:bot.name})))).map(l=>`
+            <div class="log-line">
+              <span class="log-time">${l.t}</span>
+              ${l._bot ? `<span style="color:var(--muted)">[${l._bot}]</span>` : ''}
+              <span class="log-level-${l.lvl}">[${l.lvl.toUpperCase()}]</span>
+              <span class="log-msg">${l.msg}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   SETTINGS VIEW
+══════════════════════════════════════════════ */
+function renderSettings() {
+  return `
+    <div style="font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:22px">Settings</div>
+    <div class="panel" style="max-width:540px">
+      <div class="panel-header"><div class="panel-title">Platform Config</div></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Max Bots Per User</label>
+          <input class="form-input" value="10" type="number"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Log Retention (days)</label>
+          <input class="form-input" value="7" type="number"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Auto-Restart on Crash</label>
+          <select class="form-select">
+            <option value="1">Enabled</option>
+            <option value="0">Disabled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Watchdog Interval (seconds)</label>
+          <input class="form-input" value="30" type="number"/>
+        </div>
+        <button class="btn-primary" onclick="notify('Settings saved','success')">Save Settings</button>
+      </div>
+    </div>
+    <div class="panel" style="max-width:540px">
+      <div class="panel-header"><div class="panel-title">Change Password</div></div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input class="form-input" type="password"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input class="form-input" type="password"/>
+        </div>
+        <button class="btn-primary" onclick="notify('Password updated','success')">Update Password</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   BOT ACTIONS
+══════════════════════════════════════════════ */
+function startBot(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  b.status = 'running'; b.cpu = +(Math.random()*5+1).toFixed(1); b.ram = Math.floor(Math.random()*60+30);
+  b.logs.push({ t:ts(), lvl:'ok', msg:`Bot started — ${b.startCmd}` });
+  b.logs.push({ t:ts(), lvl:'info', msg:'Polling for updates...' });
+  notify(`${b.name} started`, 'success');
+  if (STATE.activeView==='bots') render('bots');
+  if (STATE.activeView==='dashboard') render('dashboard');
+  renderSidebarBots();
+}
+
+function stopBot(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  b.status = 'stopped'; b.cpu = 0; b.ram = 0;
+  b.logs.push({ t:ts(), lvl:'warn', msg:'Bot stopped by user' });
+  notify(`${b.name} stopped`, 'info');
+  if (STATE.activeView==='bots') render('bots');
+  if (STATE.activeView==='dashboard') render('dashboard');
+  renderSidebarBots();
+}
+
+function restartBot(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  b.logs.push({ t:ts(), lvl:'warn', msg:'Restarting...' });
+  notify(`${b.name} restarting...`, 'info');
+  setTimeout(() => {
+    b.logs.push({ t:ts(), lvl:'ok', msg:'Bot restarted successfully' });
+    notify(`${b.name} is running`, 'success');
+    renderSidebarBots();
+  }, 1200);
+}
+
+function deleteBot(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  if (!confirm(`Delete "${b.name}"? This cannot be undone.`)) return;
+  STATE.bots = STATE.bots.filter(x=>x.id!==id);
+  notify(`${b.name} deleted`, 'info');
+  render('bots');
+}
+
+function openBot(id) {
+  STATE.selectedBot = id;
+  render('bot-detail', id);
+}
+
+function saveEnv(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  b.env = document.getElementById('env-editor').value;
+  notify('Environment variables saved', 'success');
+}
+
+function clearLog(id) {
+  const b = STATE.bots.find(x=>x.id===id);
+  if (!b) return;
+  b.logs = [];
+  const term = document.getElementById('live-log-term');
+  if (term) term.innerHTML = '';
+  notify('Log cleared', 'info');
+}
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function statusBadge(s) {
+  if (s==='running') return `<span class="badge badge-green"><span class="badge-dot"></span>Running</span>`;
+  if (s==='stopped') return `<span class="badge badge-red"><span class="badge-dot"></span>Stopped</span>`;
+  return `<span class="badge badge-yellow"><span class="badge-dot"></span>${s}</span>`;
+}
+
+function formatUptime(s) {
+  if (!s) return '—';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+function attachHandlers() {}
+
+/* ══════════════════════════════════════════════
+   LIVE STATS UPDATER
+══════════════════════════════════════════════ */
+function startLiveUpdates() {
+  setInterval(() => {
+    STATE.bots.forEach(b => {
+      if (b.status !== 'running') return;
+      b.cpu = Math.max(0.5, Math.min(95, b.cpu + (Math.random()-0.5)*2));
+      b.cpu = +b.cpu.toFixed(1);
+      b.ram = Math.max(20, Math.min(200, b.ram + Math.floor((Math.random()-0.5)*8)));
+      b.uptime += 5;
+    });
+    if (STATE.activeView === 'dashboard') render('dashboard');
+    renderSidebarBots();
+  }, 5000);
+}
+</script>
+</body>
+</html>
