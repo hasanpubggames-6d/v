@@ -18,7 +18,7 @@ from pathlib import Path
 from datetime import datetime
 from functools import wraps
 from collections import deque
-
+from flask import send_file
 from flask import (
     Flask, render_template, request, jsonify,
     session, redirect, url_for, send_from_directory,
@@ -229,7 +229,7 @@ threading.Thread(target=watchdog, daemon=True).start()
 def index():
     if session.get("user"):
         return redirect(url_for("dashboard"))
-    return render_template("index.html")
+    return send_file(__file__.replace('app.py', 'index.html'))
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
